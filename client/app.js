@@ -1,3 +1,5 @@
+const dict = require('./src/dict');
+
 function createLine(text) {
     const el = document.createElement('div');
     el.textContent = text;
@@ -19,13 +21,13 @@ function onClick(ws) {
     const ws = new WebSocket('ws://localhost:8080/websocket');
 
     ws.onopen = function () {
-        addStatus('connected!');
+        addStatus(dict.MESSAGE.CONNECTED);
     };
     ws.onmessage = function (e) {
-        addStatus('server: ' + e.data);
+        addStatus(dict.MESSAGE.INCOMING + e.data);
     };
     ws.onclose = function () {
-        addStatus('closed');
+        addStatus(dict.MESSAGE.DISCONNECTED);
     };
 
     document.getElementById('send').addEventListener('click', onClick(ws));
