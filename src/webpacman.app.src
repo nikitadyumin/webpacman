@@ -1,12 +1,13 @@
 {application, webpacman,
- [
-  {description, ""},
-  {vsn, "1"},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
-  {mod, { webpacman_app, []}},
-  {env, []}
- ]}.
+  [
+    {description, ""},
+    {vsn, "1"},
+    {registered, []},
+    {applications, [
+      kernel,
+      stdlib,
+      crypto, ranch, cowboy
+    ]},
+    {mod, {webpacman_app, []}},
+    {env, []}
+  ]}.
