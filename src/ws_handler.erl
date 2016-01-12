@@ -10,14 +10,14 @@
 -author("ndyumin").
 
 -export([init/2]).
+-export([terminate/3]).
 -export([websocket_handle/3]).
 -export([websocket_info/3]).
 
 %%% new connection
 init(Req, Opts) ->
+  gproc:send({r, l, players}, {add, self()}),
   gproc:reg({p, l, ws_msg}),
-  self() ! protocol:map_update(map:get()),
-  self() ! protocol:user_update(<<"name">>, 10, 10),
   {cowboy_websocket, Req, Opts}.
 
 %%% client message
@@ -30,3 +30,7 @@ websocket_handle(_Data, Req, State) ->
 %%% server message
 websocket_info(Msg, Req, State) ->
   {reply, {text, Msg}, Req, State}.
+
+%%% on disconnect
+terminate(_, _, _) ->
+  gproc:send({r, l, players}, {remove, self()}).

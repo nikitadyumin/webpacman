@@ -5,6 +5,7 @@
 -export([start/2, stop/1]).
 
 start(_Type, _Args) ->
+  players:start(),
   Dispatch = cowboy_router:compile([
     {'_', [
       {"/websocket", ws_handler, []},
@@ -19,4 +20,5 @@ start(_Type, _Args) ->
   webpacman_sup:start_link().
 
 stop(_State) ->
+  players:stop(),
   ok.
