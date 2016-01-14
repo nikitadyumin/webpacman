@@ -1,6 +1,7 @@
 erl ^
  -sname webpackman ^
  -pa ebin ^
+ -pa ./deps/sync/ebin ^
  -pa ./deps/gproc/ebin ^
  -pa ./deps/ranch/ebin ^
  -pa ./deps/cowlib/ebin ^

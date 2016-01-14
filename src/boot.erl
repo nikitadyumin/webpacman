@@ -13,6 +13,7 @@
 -export([start/0]).
 
 start() ->
+  application:start(sync),
   application:start(crypto),
   application:start(bson),
   application:start(mongodb),
