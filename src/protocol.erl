@@ -22,7 +22,9 @@ map_update_raw(Map) ->
   ].
 
 user_updates_raw(Data) ->
-  lists:map(fun(D) -> user_update_raw(D) end, Data).
+  [
+    {<<"players">>, lists:map(fun(D) -> user_update_raw(D) end, Data)}
+  ].
 
 user_update_raw({Id, X, Y}) ->
   [

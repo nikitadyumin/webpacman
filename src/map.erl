@@ -47,7 +47,8 @@ stop() ->
 map_update_loop(Map) ->
   receive
     {get, Pid} ->
-      Pid ! Map, map_update_loop(protocol:map_update(Map));
+      Pid ! protocol:map_update(Map),
+      map_update_loop(Map);
     {update, Coordinates, State} ->
       map_update_loop(update(Map, Coordinates, State))
   end.
