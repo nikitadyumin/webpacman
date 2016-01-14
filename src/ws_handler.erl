@@ -17,6 +17,7 @@
 %%% new connection
 init(Req, Opts) ->
   gproc:send({r, l, players}, {add, self()}),
+  gproc:send({r, l, map}, {get, self()}),
   gproc:reg({p, l, ws_msg}),
   {cowboy_websocket, Req, Opts}.
 

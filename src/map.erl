@@ -10,9 +10,9 @@
 -author("ndyumin").
 
 %% API
--export([get/0]).
+-export([start/0, stop/0]).
 
-get() ->
+get_initial() ->
   [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
     [1, 4, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 4, 1],
@@ -36,3 +36,21 @@ get() ->
     [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   ].
+
+start() ->
+  MapLoop = spawn(fun() -> map_update_loop(get_initial()) end),
+  gproc:reg_other({r, l, map}, MapLoop).
+
+stop() ->
+  erlang:error(not_implemented).
+
+map_update_loop(Map) ->
+  receive
+    {get, Pid} ->
+      Pid ! Map, map_update_loop(protocol:map_update(Map));
+    {update, Coordinates, State} ->
+      map_update_loop(update(Map, Coordinates, State))
+  end.
+
+update(Map, {_X, _Y}, _State) ->
+  Map.

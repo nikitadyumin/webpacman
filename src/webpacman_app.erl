@@ -6,6 +6,7 @@
 
 start(_Type, _Args) ->
   players:start(),
+  map:start(),
   Dispatch = cowboy_router:compile([
     {'_', [
       {"/websocket", ws_handler, []},
@@ -21,4 +22,5 @@ start(_Type, _Args) ->
 
 stop(_State) ->
   players:stop(),
+  map:stop(),
   ok.
