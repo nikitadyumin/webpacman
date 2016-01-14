@@ -13,7 +13,8 @@
 -export([start/0, stop/0]).
 
 get_initial() ->
-  [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  from_matrix([
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
     [1, 4, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 4, 1],
     [1, 2, 1, 1, 2, 1, 1, 1, 2, 1, 2, 1, 1, 1, 2, 1, 1, 2, 1],
@@ -35,7 +36,18 @@ get_initial() ->
     [1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1],
     [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-  ].
+  ]).
+
+from_matrix(Matrix) ->
+  Lines = lists:map(fun(Line) -> array:from_list(Line) end, Matrix),
+  array:from_list(Lines).
+
+to_matrix(Array) ->
+  Lines = array:to_list(Array),
+  lists:map(fun(Line) -> array:to_list(Line) end, Lines).
+
+set(X, Y, Value, Map) ->
+  array:set(X, array:set(Y, Value, array:get(Y, Map)), Map).
 
 start() ->
   MapLoop = spawn(fun() -> map_update_loop(get_initial()) end),
@@ -47,11 +59,9 @@ stop() ->
 map_update_loop(Map) ->
   receive
     {get, Pid} ->
-      Pid ! protocol:map_update(Map),
+      Pid ! protocol:map_update(to_matrix(Map)),
       map_update_loop(Map);
-    {update, Coordinates, State} ->
-      map_update_loop(update(Map, Coordinates, State))
-  end.
 
-update(Map, {_X, _Y}, _State) ->
-  Map.
+    {update, {X, Y}, Value} ->
+      map_update_loop(set(X, Y, Value, Map))
+  end.
