@@ -18,12 +18,20 @@
 init(Req, Opts) ->
   gproc:send({r, l, players}, {add, self()}),
   gproc:send({r, l, map}, {get, self()}),
-  gproc:reg({p, l, ws_msg}),
   {cowboy_websocket, Req, Opts}.
 
 %%% client message
 websocket_handle({text, Msg}, Req, State) ->
-  gproc:send({p, l, ws_msg}, Msg),
+  % refactor the following to some kind of messenger
+  {Type, Data} = protocol:fe_update(Msg),
+  case Type of
+    <<"position">> ->
+      [
+        {<<"x">>, X},
+        {<<"y">>, Y}
+      ] = Data,
+      gproc:send({r, l, players}, {update, self(), {X, Y}})
+  end,
   {ok, Req, State};
 websocket_handle(_Data, Req, State) ->
   {ok, Req, State}.

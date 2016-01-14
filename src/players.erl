@@ -27,9 +27,9 @@ dispatch(MaxId, Connections, Msg) ->
     {remove, Connection} ->
       {MaxId, maps:remove(Connection, Connections)};
 
-    {update, Connection, Value} ->
-      {MaxId, maps:put(Connection, Value, Connections)}
-
+    {update, Connection, {X, Y}} ->
+      {Id, _oldX, _oldY} = maps:get(Connection, Connections),
+      {MaxId, maps:put(Connection, {Id, X, Y}, Connections)}
   end.
 
 sendout_player_data(Connections) ->

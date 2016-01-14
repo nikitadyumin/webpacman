@@ -13,7 +13,8 @@
 -export([
   map_update/1,
   user_updates/1,
-  user_update/1
+  user_update/1,
+  fe_update/1
 ]).
 
 map_update_raw(Map) ->
@@ -41,3 +42,10 @@ map_update(Map) ->
 
 user_updates(Data) ->
   jsx:encode(user_updates_raw(Data)).
+
+fe_update(Msg) ->
+  [
+    {<<"type">>, Type},
+    {<<"data">>, Data}
+  ] = jsx:decode(Msg),
+  {Type, Data}.
