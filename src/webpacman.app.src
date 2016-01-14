@@ -6,7 +6,9 @@
     {applications, [
       kernel,
       stdlib,
-      crypto, ranch, cowboy
+      sync,
+      cowboy,
+      gproc
     ]},
     {mod, {webpacman_app, []}},
     {env, []}

@@ -1,8 +1,7 @@
 #!/bin/sh
 
 erl \
- -sname webpackman\
+ -sname webpacman\
  -pa ebin \
  -pa deps/*/ebin \
- -boot start_sasl \
- -s boot
+ -eval "application:ensure_all_started(webpacman)"
