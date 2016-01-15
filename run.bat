@@ -1,5 +1,5 @@
 erl ^
- -sname webpacman ^
+ -name webpacman@localhost ^
  -pa ebin ^
  -pa ./deps/sync/ebin ^
  -pa ./deps/gproc/ebin ^

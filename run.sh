@@ -1,7 +1,7 @@
 #!/bin/sh
 
 erl \
- -sname webpacman\
+ -name webpacman@localhost \
  -pa ebin \
  -pa deps/*/ebin \
  -eval "application:ensure_all_started(webpacman)"
