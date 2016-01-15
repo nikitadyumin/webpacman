@@ -58,10 +58,10 @@ stop() ->
 
 map_update_loop(Map) ->
   receive
-    {get, Pid} ->
-      Pid ! protocol:map_update(to_matrix(Map)),
+    {get, Clb} ->
+      Clb(to_matrix(Map)),
       map_update_loop(Map);
 
-    {update, {X, Y}, Value} ->
+    {set, {X, Y}, Value} ->
       map_update_loop(set(X, Y, Value, Map))
   end.
