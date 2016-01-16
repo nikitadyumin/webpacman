@@ -5,6 +5,7 @@
 -export([start/2, stop/1]).
 
 start(_Type, _Args) ->
+  messenger:start(),
   players:start(),
   map:start(),
   Dispatch = cowboy_router:compile([

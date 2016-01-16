@@ -16,22 +16,12 @@
 
 %%% new connection
 init(Req, Opts) ->
-  gproc:send({r, l, players}, {add, self()}),
-  gproc:send({r, l, map}, {get, self()}),
+  gproc:send({r, l, messenger}, {user_connected, self()}),
   {cowboy_websocket, Req, Opts}.
 
 %%% client message
 websocket_handle({text, Msg}, Req, State) ->
-  % refactor the following to some kind of messenger
-  {Type, Data} = protocol:fe_update(Msg),
-  case Type of
-    <<"position">> ->
-      [
-        {<<"x">>, X},
-        {<<"y">>, Y}
-      ] = Data,
-      gproc:send({r, l, players}, {update, self(), {X, Y}})
-  end,
+  gproc:send({r, l, messenger}, {user_message, self(), Msg}),
   {ok, Req, State};
 websocket_handle(_Data, Req, State) ->
   {ok, Req, State}.
