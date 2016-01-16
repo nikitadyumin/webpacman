@@ -21,6 +21,17 @@ add_player(Connection) ->
   gproc:send({r, l, messenger}, {send_map, Connection}),
   gproc:send({r, l, messenger}, {sendout_players}).
 
-update_position(Connection, {X, Y}) ->
-  gproc:send({r, l, players}, {update, Connection, {X, Y}}),
-  gproc:send({r, l, messenger}, {sendout_players}).
+update_position(Connection, Position) ->
+  gproc:send({r, l, map}, {get_at, Position,
+    fun (Tile) ->
+      case Tile of
+        % a basic traversable tile type
+        2 ->
+          gproc:send({r, l, players}, {update, Connection, Position}),
+          gproc:send({r, l, messenger}, {sendout_players});
+        _ ->
+          erlang:display(<<"illigal position">>)
+      end
+    end
+  }).
+
