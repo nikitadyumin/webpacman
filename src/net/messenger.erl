@@ -26,10 +26,20 @@ loop() ->
       logic:add_player(Connection), loop();
   % send map update to a single Connection
     {send_map, Connection} ->
-      gproc:send({r, l, map}, {get, fun (Map) -> Connection ! protocol:map_update(Map) end }), loop();
+      gproc:send({r, l, map}, {get, fun(Map) -> Connection ! protocol:map_update(Map) end}), loop();
+  % send out a map update
+    {sendout_map} ->
+      gproc:send({r, l, players}, {get,
+        fun(Players) ->
+          gproc:send({r, l, map}, {get,
+            fun(Map) ->
+              SerializedMap = protocol:map_update(Map),
+              lists:map(fun(Pid) -> Pid ! SerializedMap end, maps:keys(Players))
+            end})
+        end}), loop();
   % send out players info to all connections
     {sendout_players} ->
-      gproc:send({r, l, players}, {get, fun (Data) -> sendout_player_data(Data) end }), loop()
+      gproc:send({r, l, players}, {get, fun(Data) -> sendout_player_data(Data) end}), loop()
   end.
 
 dispatch(Connection, Msg) ->

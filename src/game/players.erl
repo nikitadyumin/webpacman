@@ -19,7 +19,7 @@ start() ->
 loop(MaxId, Connections) ->
   receive
     {add, Connection} ->
-      loop(MaxId + 1, maps:put(Connection, {MaxId, 1, 1}, Connections));
+      loop(MaxId + 1, maps:put(Connection, {MaxId, 1, 1, 0}, Connections));
 
     {add, Connection, Value} ->
       loop(MaxId + 1, maps:put(Connection, Value, Connections));
@@ -31,9 +31,13 @@ loop(MaxId, Connections) ->
       Clb(Connections),
       loop(MaxId, Connections);
 
+    {add_score, Connection, Score} ->
+      {Id, _oldX, _oldY, _oldScore} = maps:get(Connection, Connections),
+      loop(MaxId, maps:put(Connection, {Id, _oldX, _oldY, _oldScore + Score}, Connections));
+
     {update, Connection, {X, Y}} ->
-      {Id, _oldX, _oldY} = maps:get(Connection, Connections),
-      loop(MaxId, maps:put(Connection, {Id, X, Y}, Connections))
+      {Id, _oldX, _oldY, Score} = maps:get(Connection, Connections),
+      loop(MaxId, maps:put(Connection, {Id, X, Y, Score}, Connections))
   end.
 
 stop() ->
