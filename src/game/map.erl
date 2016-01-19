@@ -41,6 +41,8 @@ get_initial() ->
     [200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200]
   ]).
 
+-define(SPAWN_POSITION, {9, 12}).
+
 from_matrix(Matrix) ->
   Lines = lists:map(fun(Line) -> array:from_list(Line) end, Matrix),
   array:from_list(Lines).
@@ -53,22 +55,31 @@ set(X, Y, Value, Map) ->
   array:set(Y, array:set(X, Value, array:get(Y, Map)), Map).
 
 start() ->
-  MapLoop = spawn(fun() -> map_update_loop(get_initial()) end),
+  MapLoop = spawn(fun() -> map_update_loop(get_initial(), false) end),
   gproc:reg_other({r, l, map}, MapLoop).
 
 stop() ->
   erlang:error(not_implemented).
 
-map_update_loop(Map) ->
+map_update_loop(Map, Update) ->
+  case Update of
+    true ->
+      gproc:send({r, l, messenger}, {sendout_map});
+    _ -> ok
+  end,
   receive
     {get, Clb} ->
       Clb(to_matrix(Map)),
-      map_update_loop(Map);
+      map_update_loop(Map, false);
 
     {get_at, {X, Y},  Clb} ->
       Clb(array:get(X, array:get(Y, Map))),
-      map_update_loop(Map);
+      map_update_loop(Map, false);
+
+    {get_spawn_position, Clb} ->
+      Clb(?SPAWN_POSITION),
+      map_update_loop(Map, false);
 
     {set, {X, Y}, Value} ->
-      map_update_loop(set(X, Y, Value, Map))
+      map_update_loop(set(X, Y, Value, Map), true)
   end.
