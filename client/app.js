@@ -29,6 +29,7 @@ function gameStarter(element) {
 }
 
 (function () {
+    const current = document.getElementById('current');
     const ws = new WebSocket('ws://localhost:8080/websocket'),
         game = gameStarter(document.getElementById('game'));
 
@@ -36,10 +37,16 @@ function gameStarter(element) {
         addStatus(dict.MESSAGE.CONNECTED);
     };
     ws.onmessage = function (e) {
-        addStatus(dict.MESSAGE.INCOMING + e.data);
         const data = JSON.parse(e.data);
         if (data.map) {
+            current.innerHTML = data.map.map(line =>
+                '<div>' + line.map(cell =>
+                    `<span class="c${cell}">${cell}</span>`
+                ).join('')+ '</div>'
+            ).join('');
             game.map(data.map);
+        } else {
+            addStatus(dict.MESSAGE.INCOMING + e.data);
         }
     };
     ws.onclose = function () {

@@ -15,23 +15,24 @@
   add_player/1
 ]).
 
+-define(BONUS, 10).
 
 add_player(Connection) ->
   gproc:send({r, l, players}, {add, Connection}),
-  gproc:send({r, l, messenger}, {send_map, Connection}),
-  gproc:send({r, l, messenger}, {sendout_players}).
+  gproc:send({r, l, messenger}, {send_map, Connection}).
 
 update_position(Connection, Position) ->
   gproc:send({r, l, map}, {get_at, Position,
-    fun (Tile) ->
-      case Tile of
-        % a basic traversable tile type
-        2 ->
-          gproc:send({r, l, players}, {update, Connection, Position}),
-          gproc:send({r, l, messenger}, {sendout_players});
-        _ ->
+    fun(Tile) ->
+      if
+        Tile == 140 -> % bonus
+          gproc:send({r, l, map}, {set, Position, 100}),
+          gproc:send({r, l, players}, {add_score, Connection, ?BONUS}),
+          gproc:send({r, l, players}, {update, Connection, Position});
+        Tile >= 100 andalso Tile < 200 -> % generally traversable
+          gproc:send({r, l, players}, {update, Connection, Position});
+        true ->
           erlang:display(<<"illigal position">>)
       end
     end
   }).
-

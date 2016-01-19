@@ -27,9 +27,10 @@ user_updates_raw(Data) ->
     {<<"players">>, lists:map(fun(D) -> user_update_raw(D) end, Data)}
   ].
 
-user_update_raw({Id, X, Y}) ->
+user_update_raw({Id, X, Y, Score}) ->
   [
     {<<"id">>, Id},
+    {<<"score">>, Score},
     {<<"x">>, X},
     {<<"y">>, Y}
   ].

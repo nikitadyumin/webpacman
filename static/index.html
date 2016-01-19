@@ -9,6 +9,15 @@
             width: 513px;
             margin: 0 0 0 97px;
         }
+        .c140 {
+            background-color: yellow;
+        }
+        .c100 {
+            background-color: grey;
+        }
+        .c200 {
+            background-color: black;
+        }
     </style>
 </head>
 <body>
@@ -17,13 +26,14 @@ position update for the current player\connection
 {
     "type": "position",
     "data": {
-        "x": 123,
-        "y": 45
+        "x": 1,
+        "y": 2
     }
 }
 </pre>
 <input id="msg" type="text"/>
 <button id="send">send</button>
+<div id="current"></div>
 <div id="status"></div>
 <div id="game"></div>
 <script src="bundle.js"></script>
