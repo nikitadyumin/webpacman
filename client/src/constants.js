@@ -14,6 +14,9 @@ const WALLS_OPTION = {
 };
 const WALLS = {
     HORIZONTAL_LINE: 200,
+    VERTICAL_LINE: 201,
+    BOTTOM_RIGHT_LINE: 202,
+    BOTTOM_LEFT_LINE: 203,
 };
 
 module.exports = {
