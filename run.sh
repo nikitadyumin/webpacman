@@ -1,8 +1,7 @@
 #!/bin/sh
 
-rm -rf ./deps
-
-rebar compile
+ls ./ebin
+ls ./deps
 
 erl \
  -noshell \
