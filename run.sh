@@ -1,6 +1,6 @@
 #!/bin/sh
 
-erl \
+sudo erl \
  -noshell \
  -name webpacman@localhost \
  -pa ebin \
