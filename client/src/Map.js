@@ -51,6 +51,27 @@ const drawRightCenterLine = (context, x, y) => {
     context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
 };
 
+
+const drawBottomCurve = (context, x, y) => {
+    drawBottomLeftLine(context, x, y);
+    drawBottomRightLine(context, x, y);
+};
+
+const drawLeftCurve = (context, x, y) => {
+    drawBottomLeftLine(context, x, y);
+    drawTopLeftLine(context, x, y);
+};
+
+const drawRightCurve = (context, x, y) => {
+    drawBottomRightLine(context, x, y);
+    drawTopRightLine(context, x, y);
+};
+
+const drawTopCurve = (context, x, y) => {
+    drawTopRightLine(context, x, y);
+    drawTopLeftLine(context, x, y);
+};
+
 const renderNonTraversable = (context, x, y, block) => {
     context.beginPath();
     context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
@@ -71,6 +92,11 @@ const renderNonTraversable = (context, x, y, block) => {
             [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)],
             [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)],
             [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)],
+
+            [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)],
+            [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)],
+            [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)],
+            [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)],
 
             [R.T, R.always((msg) => console.log(msg))]
         ])(block);

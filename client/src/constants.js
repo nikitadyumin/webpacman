@@ -23,6 +23,10 @@ const WALLS = {
     BOTTOM_CENTER_LINE: 207,
     LEFT_CENTER_LINE: 208,
     RIGHT_CENTER_LINE: 209,
+    BOTTOM_CURVE: 210,
+    TOP_CURVE: 211,
+    LEFT_CURVE: 212,
+    RIGHT_CURVE: 213
 };
 
 module.exports = {
