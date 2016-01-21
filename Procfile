@@ -1,1 +1,1 @@
-web: rebar co&run.sh
+web: ./run.sh
