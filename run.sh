@@ -1,6 +1,7 @@
 #!/bin/sh
 
 erl \
+ -noshell \
  -name webpacman@localhost \
  -pa ebin \
  -pa deps/*/ebin \
