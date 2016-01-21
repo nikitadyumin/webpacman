@@ -28,9 +28,23 @@ function gameStarter(element) {
     return {map: mapRender};
 }
 
+function parseQuery(query) {
+    var data = {};
+    if (query) {
+        const pairs = (query.substr(1)).split('&');
+        pairs.forEach((pair) => {
+            const param = pair.split('=');
+            data[param[0]] = param[1];
+        });
+    }
+    return data;
+}
+
+
 (function () {
     const current = document.getElementById('current');
-    const ws = new WebSocket('ws://fierce-basin-86946.herokuapp.com/websocket'),
+    const debug = parseQuery(window.location.search)['debug'];
+    const ws = new WebSocket(debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket'),
         game = gameStarter(document.getElementById('game'));
 
     ws.onopen = function () {
@@ -42,7 +56,7 @@ function gameStarter(element) {
             current.innerHTML = data.map.map(line =>
                 '<div>' + line.map(cell =>
                     `<span class="c${cell}">${cell}</span>`
-                ).join('')+ '</div>'
+                ).join('') + '</div>'
             ).join('');
             game.map(data.map);
         } else {
