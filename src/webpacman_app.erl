@@ -16,7 +16,7 @@ start(_Type, _Args) ->
       {"/[...]", cowboy_static, {dir, "static"}}
     ]}
   ]),
-  {ok, _} = cowboy:start_http(http, 3, [{port, 80}], [
+  {ok, _} = cowboy:start_http(http, 3, [{port, 8080}], [
     {env, [{dispatch, Dispatch}]}
   ]),
   webpacman_sup:start_link().

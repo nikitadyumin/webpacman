@@ -1,8 +1,5 @@
 #!/bin/sh
 
-ls ./ebin
-ls ./deps
-
 erl \
  -noshell \
  -name webpacman@localhost \
