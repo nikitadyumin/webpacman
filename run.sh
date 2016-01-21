@@ -1,5 +1,9 @@
 #!/bin/sh
 
+rm -rf ./deps
+
+rebar compile
+
 erl \
  -noshell \
  -name webpacman@localhost \
