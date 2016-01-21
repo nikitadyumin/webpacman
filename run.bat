@@ -1,4 +1,5 @@
 erl ^
+ -noshell ^
  -name webpacman@localhost ^
  -pa ebin ^
  -pa ./deps/sync/ebin ^
