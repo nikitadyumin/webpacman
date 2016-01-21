@@ -30,7 +30,7 @@ function gameStarter(element) {
 
 (function () {
     const current = document.getElementById('current');
-    const ws = new WebSocket('ws://fierce-basin-86946/websocket'),
+    const ws = new WebSocket('ws://fierce-basin-86946.herokuapp.com/websocket'),
         game = gameStarter(document.getElementById('game'));
 
     ws.onopen = function () {
