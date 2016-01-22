@@ -28,17 +28,11 @@ function gameStarter(element) {
     return {map: mapRender};
 }
 
-function parseQuery(query) {
-    var data = {};
-    if (query) {
-        const pairs = (query.substr(1)).split('&');
-        pairs.forEach((pair) => {
-            const param = pair.split('=');
-            data[param[0]] = param[1];
-        });
-    }
-    return data;
-}
+const parseQuery = R.pipe(
+    R.replace('?', ''), R.split('&'), R.reject(R.equals('')),
+    R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))),
+    R.fromPairs
+);
 
 
 (function () {
