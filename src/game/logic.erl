@@ -16,6 +16,7 @@
 ]).
 
 -define(BONUS, 10).
+-define(BONUS_RESTORE_TIME_MS, 5000).
 
 add_player(Connection) ->
   gproc:send({r, l, players}, {add, Connection}),
@@ -28,7 +29,9 @@ update_position(Connection, Position) ->
         Tile == 140 -> % bonus
           gproc:send({r, l, map}, {set, Position, 100}),
           gproc:send({r, l, players}, {add_score, Connection, ?BONUS}),
-          gproc:send({r, l, players}, {update, Connection, Position});
+          gproc:send({r, l, players}, {update, Connection, Position}),
+          [MapPid| _] = gproc:lookup_pids({r, l, map}),
+          erlang:send_after(?BONUS_RESTORE_TIME_MS, MapPid, {set, Position, 140});
         Tile >= 100 andalso Tile < 200 -> % generally traversable
           gproc:send({r, l, players}, {update, Connection, Position});
         true ->
