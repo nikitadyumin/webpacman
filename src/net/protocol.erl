@@ -14,20 +14,11 @@
   map_update/1,
   user_updates/1,
   user_update/1,
+  self_update/1,
   fe_message/1
 ]).
 
-map_update_raw(Map) ->
-  [
-    {<<"map">>, Map}
-  ].
-
-user_updates_raw(Data) ->
-  [
-    {<<"players">>, lists:map(fun(D) -> user_update_raw(D) end, Data)}
-  ].
-
-user_update_raw({Id, X, Y, Score}) ->
+prepare_player({Id, X, Y, Score}) ->
   [
     {<<"id">>, Id},
     {<<"score">>, Score},
@@ -35,14 +26,29 @@ user_update_raw({Id, X, Y, Score}) ->
     {<<"y">>, Y}
   ].
 
+self_update(Data) ->
+  jsx:encode([
+    {<<"type">>, <<"self">>},
+    {<<"data">>, prepare_player(Data)}
+  ]).
+
 user_update(Data) ->
-  jsx:encode(user_update_raw(Data)).
+  jsx:encode([
+    {<<"type">>, <<"player">>},
+    {<<"data">>, Data}
+  ]).
 
 map_update(Map) ->
-  jsx:encode(map_update_raw(Map)).
+  jsx:encode([
+    {<<"type">>, <<"map">>},
+    {<<"data">>, Map}
+  ]).
 
 user_updates(Data) ->
-  jsx:encode(user_updates_raw(Data)).
+  jsx:encode([
+    {<<"type">>, <<"players">>},
+    {<<"data">>, lists:map(fun(D) -> prepare_player(D) end, Data)}
+  ]).
 
 fe_message(Msg) ->
   [

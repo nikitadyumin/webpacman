@@ -37,6 +37,9 @@ loop() ->
               lists:map(fun(Pid) -> Pid ! SerializedMap end, maps:keys(Players))
             end})
         end}), loop();
+  % send a player update about to itself
+    {send_self_update, Connection, Update} ->
+      Connection ! protocol:self_update(Update), loop();
   % send out players info to all connections
     {sendout_players} ->
       gproc:send({r, l, players}, {get, fun(Data) -> sendout_player_data(Data) end}), loop()

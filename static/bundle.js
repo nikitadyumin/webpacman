@@ -86,12 +86,15 @@
 	        addStatus(dict.MESSAGE.CONNECTED);
 	    };
 	    ws.onmessage = function (e) {
-	        const data = JSON.parse(e.data);
-	        if (data.map) {
-	            current.innerHTML = data.map.map(line => '<div>' + line.map(cell => `<span class="c${ cell }">${ cell }</span>`).join('') + '</div>').join('');
-	            game.map(data.map);
-	        } else {
-	            addStatus(dict.MESSAGE.INCOMING + e.data);
+	        const message = JSON.parse(e.data);
+	        switch (message.type) {
+	            case 'map':
+	                current.innerHTML = message.data.map(line => '<div>' + line.map(cell => `<span class="c${ cell }">${ cell }</span>`).join('') + '</div>').join('');
+	                game.map(message.data);
+	                break;
+	            default:
+	                addStatus(dict.MESSAGE.INCOMING + e.data);
+	                break;
 	        }
 	    };
 	    ws.onclose = function () {

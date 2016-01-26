@@ -34,6 +34,7 @@ loop(MaxId, Connections, Update) ->
       }), loop(MaxId, Connections, false);
 
     {add, Connection, Value} ->
+      gproc:send({r, l, messenger}, {send_self_update, Connection, Value}),
       loop(MaxId + 1, maps:put(Connection, Value, Connections), true);
 
     {remove, Connection} ->
