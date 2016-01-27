@@ -44,69 +44,182 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(R) {const dict = __webpack_require__(2);
-	const map = __webpack_require__(3);
-	function createLine(text) {
-	    const el = document.createElement('div');
-	    el.textContent = text;
-	    return el;
+	'use strict';
+	
+	var dict = __webpack_require__(1);
+	var game = __webpack_require__(2);
+	var connection = __webpack_require__(6);
+	var dispatch = __webpack_require__(7);
+	var config = __webpack_require__(8)();
+	
+	function log(text) {
+	    console.info(text);
 	}
 	
-	function addStatus(text) {
-	    const line = createLine(Date() + ': ' + text);
-	    document.getElementById('status').appendChild(line);
-	}
-	
-	function onClick(ws) {
+	function onClick(input, connection) {
 	    return function () {
-	        ws.send(document.getElementById('msg').value);
+	        return connection.send(input.value);
 	    };
 	}
-	function gameStarter(element) {
-	    const blockSize = element.offsetWidth / 19,
-	          canvas = document.createElement('canvas');
+	
+	var _game = game(document.getElementById('game'));
+	var url = config.debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket';
+	
+	var _connection = connection(url, {
+	    onOpen: function onOpen() {
+	        return log(dict.MESSAGE.CONNECTED);
+	    },
+	    onMessage: dispatch(_game, {
+	        onUnknown: function onUnknown(msg) {
+	            return log(dict.MESSAGE.INCOMING + msg);
+	        }
+	    }),
+	    onClose: function onClose() {
+	        return log(dict.MESSAGE.DISCONNECTED);
+	    }
+	});
+	
+	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	module.exports = {
+	    MESSAGE: {
+	        CONNECTED: 'connected',
+	        DISCONNECTED: 'disconnected',
+	        INCOMING: 'msg: '
+	    }
+	};
+
+/***/ },
+/* 2 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var map = __webpack_require__(3);
+	
+	module.exports = function gameStarter(element) {
+	    var blockSize = element.offsetWidth / 19,
+	        canvas = document.createElement('canvas');
 	
 	    canvas.setAttribute('width', blockSize * 19 + 'px');
 	    canvas.setAttribute('height', blockSize * 22 + 65 + 'px');
 	    element.appendChild(canvas);
-	    const ctx = canvas.getContext('2d');
-	    const mapRender = map.render(ctx);
+	    var ctx = canvas.getContext('2d');
+	    var mapRender = map.render(ctx);
 	    return { map: mapRender };
-	}
-	
-	const parseQuery = R.pipe(R.replace('?', ''), R.split('&'), R.reject(R.equals('')), R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))), R.fromPairs);
-	
-	(function () {
-	    const current = document.getElementById('current');
-	    const debug = parseQuery(window.location.search)['debug'];
-	    const ws = new WebSocket(debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket'),
-	          game = gameStarter(document.getElementById('game'));
-	
-	    ws.onopen = function () {
-	        addStatus(dict.MESSAGE.CONNECTED);
-	    };
-	    ws.onmessage = function (e) {
-	        const message = JSON.parse(e.data);
-	        switch (message.type) {
-	            case 'map':
-	                current.innerHTML = message.data.map(line => '<div>' + line.map(cell => `<span class="c${ cell }">${ cell }</span>`).join('') + '</div>').join('');
-	                game.map(message.data);
-	                break;
-	            default:
-	                addStatus(dict.MESSAGE.INCOMING + e.data);
-	                break;
-	        }
-	    };
-	    ws.onclose = function () {
-	        addStatus(dict.MESSAGE.DISCONNECTED);
-	    };
-	
-	    document.getElementById('send').addEventListener('click', onClick(ws));
-	})();
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+	};
 
 /***/ },
-/* 1 */
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var R = __webpack_require__(4);
+	var CONSTANTS = __webpack_require__(5);
+	var drawHorizontalLine = function drawHorizontalLine(context, x, y) {
+	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawVerticalLine = function drawVerticalLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomRightLine = function drawBottomRightLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomLeftLine = function drawBottomLeftLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopLeftLine = function drawTopLeftLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopRightLine = function drawTopRightLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopCenterLine = function drawTopCenterLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomCenterLine = function drawBottomCenterLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawLeftCenterLine = function drawLeftCenterLine(context, x, y) {
+	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawRightCenterLine = function drawRightCenterLine(context, x, y) {
+	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomCurve = function drawBottomCurve(context, x, y) {
+	    drawBottomLeftLine(context, x, y);
+	    drawBottomRightLine(context, x, y);
+	};
+	
+	var drawLeftCurve = function drawLeftCurve(context, x, y) {
+	    drawBottomLeftLine(context, x, y);
+	    drawTopLeftLine(context, x, y);
+	};
+	
+	var drawRightCurve = function drawRightCurve(context, x, y) {
+	    drawBottomRightLine(context, x, y);
+	    drawTopRightLine(context, x, y);
+	};
+	
+	var drawTopCurve = function drawTopCurve(context, x, y) {
+	    drawTopRightLine(context, x, y);
+	    drawTopLeftLine(context, x, y);
+	};
+	
+	var renderNonTraversable = function renderNonTraversable(context, x, y, block) {
+	    context.beginPath();
+	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
+	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
+	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
+	
+	    var action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(function (msg) {
+	        return console.log(msg);
+	    })]])(block);
+	    action(context, x, y);
+	    context.stroke();
+	};
+	var renderBlocks = R.curry(function (context, blocks) {
+	    blocks.forEach(function (line, y) {
+	        line.forEach(function (block, x) {
+	            var action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(function (msg) {
+	                return console.log(msg);
+	            })]])(block);
+	            action(context, x, y, block);
+	        });
+	    });
+	});
+	
+	module.exports = { render: renderBlocks };
+
+/***/ },
+/* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//  Ramda v0.19.1
@@ -8558,133 +8671,26 @@
 
 
 /***/ },
-/* 2 */
+/* 5 */
 /***/ function(module, exports) {
 
-	module.exports = {
-	    MESSAGE: {
-	        CONNECTED: 'connected',
-	        DISCONNECTED: 'disconnected',
-	        INCOMING: 'msg: '
-	    }
-	};
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	const R = __webpack_require__(1);
-	const CONSTANTS = __webpack_require__(4);
-	const drawHorizontalLine = (context, x, y) => {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
+	'use strict';
 	
-	const drawVerticalLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawBottomRightLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawBottomLeftLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawTopLeftLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawTopRightLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawTopCenterLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawBottomCenterLine = (context, x, y) => {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawLeftCenterLine = (context, x, y) => {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawRightCenterLine = (context, x, y) => {
-	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	const drawBottomCurve = (context, x, y) => {
-	    drawBottomLeftLine(context, x, y);
-	    drawBottomRightLine(context, x, y);
-	};
-	
-	const drawLeftCurve = (context, x, y) => {
-	    drawBottomLeftLine(context, x, y);
-	    drawTopLeftLine(context, x, y);
-	};
-	
-	const drawRightCurve = (context, x, y) => {
-	    drawBottomRightLine(context, x, y);
-	    drawTopRightLine(context, x, y);
-	};
-	
-	const drawTopCurve = (context, x, y) => {
-	    drawTopRightLine(context, x, y);
-	    drawTopLeftLine(context, x, y);
-	};
-	
-	const renderNonTraversable = (context, x, y, block) => {
-	    context.beginPath();
-	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
-	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
-	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
-	
-	    const action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(msg => console.log(msg))]])(block);
-	    action(context, x, y);
-	    context.stroke();
-	};
-	const renderBlocks = R.curry((context, blocks) => {
-	    blocks.forEach((line, y) => {
-	        line.forEach((block, x) => {
-	            const action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(msg => console.log(msg))]])(block);
-	            action(context, x, y, block);
-	        });
-	    });
-	});
-	
-	module.exports = { render: renderBlocks };
-
-/***/ },
-/* 4 */
-/***/ function(module, exports) {
-
-	const PACMAN = {
+	var PACMAN = {
 	    TRAVERSABLE: { l: 100, r: 199 },
 	    NON_TRAVERSABLE: { l: 200, r: 299 }
 	};
 	
-	const GENERAL = {
+	var GENERAL = {
 	    blockSize: 20
 	};
 	
-	const WALLS_OPTION = {
+	var WALLS_OPTION = {
 	    strokeStyle: '#2c2a80',
 	    lineWidth: 5,
 	    lineCap: 'round'
 	};
-	const WALLS = {
+	var WALLS = {
 	    HORIZONTAL_LINE: 200,
 	    VERTICAL_LINE: 201,
 	    BOTTOM_RIGHT_LINE: 202,
@@ -8707,6 +8713,82 @@
 	    WALLS_OPTION: WALLS_OPTION,
 	    WALLS: WALLS
 	};
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	function connection(url, _ref) {
+	    var onOpen = _ref.onOpen;
+	    var onMessage = _ref.onMessage;
+	    var onError = _ref.onError;
+	    var onClose = _ref.onClose;
+	
+	    var ws = new WebSocket(url);
+	    ws.onopen = onOpen;
+	    ws.onmessage = onMessage;
+	    ws.onclose = onClose;
+	    return ws;
+	}
+	
+	module.exports = connection;
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	module.exports = function (game, _ref) {
+	    var onUnknown = _ref.onUnknown;
+	
+	    var current = document.getElementById('current');
+	    var debug_render = function debug_render(data) {
+	        return current.innerHTML = data.map(function (line) {
+	            return '<div>' + line.map(function (cell) {
+	                return '<span class="c' + cell + '">' + cell + '</span>';
+	            }).join('') + '</div>';
+	        }).join('');
+	    };
+	
+	    return function dispatch(_ref2) {
+	        var data = _ref2.data;
+	
+	        var message = JSON.parse(data);
+	        switch (message.type) {
+	            case 'map':
+	                debug_render(message.data);
+	                game.map(message.data);
+	                break;
+	            default:
+	                onUnknown(data);
+	                break;
+	        }
+	    };
+	};
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(R) {'use strict';
+	
+	var parseQuery = R.pipe(R.replace('?', ''), R.split('&'), R.reject(R.equals('')), R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))), R.fromPairs);
+	
+	module.exports = function () {
+	    var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	
+	    var defaults = {
+	        debug: false
+	    };
+	
+	    var urlOptions = parseQuery(window.location.search);
+	
+	    return Object.assign({}, defaults, urlOptions, opts);
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
 
 /***/ }
 /******/ ]);
