@@ -8745,7 +8745,7 @@
 	    var onUnknown = _ref.onUnknown;
 	
 	    var current = document.getElementById('current');
-	    var debug_render = function debug_render(data) {
+	    var debug_render_map = function debug_render_map(data) {
 	        return current.innerHTML = data.map(function (line) {
 	            return '<div>' + line.map(function (cell) {
 	                return '<span class="c' + cell + '">' + cell + '</span>';
@@ -8753,14 +8753,56 @@
 	        }).join('');
 	    };
 	
-	    return function dispatch(_ref2) {
-	        var data = _ref2.data;
+	    var clean = function clean() {
+	        return Array.from(document.querySelectorAll('#current span')).forEach(function (e) {
+	            e.setAttribute('data-player', 'false');
+	        });
+	    };
+	
+	    var self = null;
+	    var map = [];
+	    var players = [];
+	
+	    var update_self_id = function update_self_id(_ref2) {
+	        var id = _ref2.id;
+	
+	        self = id;
+	    };
+	
+	    var debug_render_players = function debug_render_players(players) {
+	        clean();
+	        players.forEach(function (_ref3) {
+	            var id = _ref3.id;
+	            var x = _ref3.x;
+	            var y = _ref3.y;
+	            return current.childNodes[y].childNodes[x].setAttribute('data-player', self === id ? 'self' : 'player');
+	        });
+	    };
+	
+	    function render(_ref4) {
+	        var map = _ref4.map;
+	        var players = _ref4.players;
+	
+	        debug_render_map(map);
+	        debug_render_players(players);
+	    }
+	
+	    return function dispatch(_ref5) {
+	        var data = _ref5.data;
 	
 	        var message = JSON.parse(data);
 	        switch (message.type) {
 	            case 'map':
-	                debug_render(message.data);
+	                map = message.data;
+	                render({ map: map, players: players });
 	                game.map(message.data);
+	                break;
+	            case 'self':
+	                update_self_id(message.data);
+	                break;
+	            case 'players':
+	                players = message.data;
+	                render({ map: map, players: players });
 	                break;
 	            default:
 	                onUnknown(data);
