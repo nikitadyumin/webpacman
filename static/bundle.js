@@ -51,6 +51,7 @@
 	var connection = __webpack_require__(6);
 	var dispatch = __webpack_require__(7);
 	var config = __webpack_require__(8)();
+	var protocol = __webpack_require__(9);
 	
 	function log(text) {
 	    console.info(text);
@@ -65,18 +66,42 @@
 	var _game = game(document.getElementById('game'));
 	var url = config.debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket';
 	
+	var _dispatcher = dispatch(_game, {
+	    onUnknown: function onUnknown(msg) {
+	        return log(dict.MESSAGE.INCOMING + msg);
+	    }
+	});
+	
 	var _connection = connection(url, {
 	    onOpen: function onOpen() {
 	        return log(dict.MESSAGE.CONNECTED);
 	    },
-	    onMessage: dispatch(_game, {
-	        onUnknown: function onUnknown(msg) {
-	            return log(dict.MESSAGE.INCOMING + msg);
-	        }
-	    }),
+	    onMessage: _dispatcher.dispatch,
 	    onClose: function onClose() {
 	        return log(dict.MESSAGE.DISCONNECTED);
 	    }
+	});
+	
+	document.querySelector('body').addEventListener('keydown', function (e) {
+	    var position = _dispatcher.getPosition();
+	    switch (e.keyCode) {
+	        case 37:
+	            position.x -= 1;
+	            break;
+	        case 38:
+	            position.y -= 1;
+	            break;
+	        case 39:
+	            position.x += 1;
+	            break;
+	        case 40:
+	            position.y += 1;
+	            break;
+	        default:
+	            console.info(e.keyCode);
+	            break;
+	    }
+	    _connection.send(protocol.getPositionUpdateMessage(position));
 	});
 	
 	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
@@ -8760,13 +8785,17 @@
 	    };
 	
 	    var self = null;
+	    var position = null;
 	    var map = [];
 	    var players = [];
 	
 	    var update_self_id = function update_self_id(_ref2) {
 	        var id = _ref2.id;
+	        var x = _ref2.x;
+	        var y = _ref2.y;
 	
 	        self = id;
+	        position = { x: x, y: y };
 	    };
 	
 	    var debug_render_players = function debug_render_players(players) {
@@ -8787,26 +8816,31 @@
 	        debug_render_players(players);
 	    }
 	
-	    return function dispatch(_ref5) {
-	        var data = _ref5.data;
+	    return {
+	        getPosition: function getPosition() {
+	            return position;
+	        },
+	        dispatch: function dispatch(_ref5) {
+	            var data = _ref5.data;
 	
-	        var message = JSON.parse(data);
-	        switch (message.type) {
-	            case 'map':
-	                map = message.data;
-	                render({ map: map, players: players });
-	                game.map(message.data);
-	                break;
-	            case 'self':
-	                update_self_id(message.data);
-	                break;
-	            case 'players':
-	                players = message.data;
-	                render({ map: map, players: players });
-	                break;
-	            default:
-	                onUnknown(data);
-	                break;
+	            var message = JSON.parse(data);
+	            switch (message.type) {
+	                case 'map':
+	                    map = message.data;
+	                    render({ map: map, players: players });
+	                    game.map(message.data);
+	                    break;
+	                case 'self':
+	                    update_self_id(message.data);
+	                    break;
+	                case 'players':
+	                    players = message.data;
+	                    render({ map: map, players: players });
+	                    break;
+	                default:
+	                    onUnknown(data);
+	                    break;
+	            }
 	        }
 	    };
 	};
@@ -8831,6 +8865,21 @@
 	    return Object.assign({}, defaults, urlOptions, opts);
 	};
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	module.exports = {
+	    getPositionUpdateMessage: function getPositionUpdateMessage(position) {
+	        return JSON.stringify({
+	            "type": "position",
+	            "data": position
+	        });
+	    }
+	};
 
 /***/ }
 /******/ ]);

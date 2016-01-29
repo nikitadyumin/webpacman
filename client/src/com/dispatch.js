@@ -14,14 +14,16 @@ module.exports = function (game, {onUnknown}) {
             });
 
     let self = null;
+    let position = null;
     let map = [];
     let players = [];
 
-    const update_self_id =({id}) => {
+    const update_self_id = ({id, x, y}) => {
         self = id;
+        position = {x, y};
     };
 
-    const debug_render_players =(players) => {
+    const debug_render_players = (players) => {
         clean();
         players.forEach(({id, x, y}) =>
             current.childNodes[y].childNodes[x].setAttribute(
@@ -36,24 +38,29 @@ module.exports = function (game, {onUnknown}) {
         debug_render_players(players);
     }
 
-    return function dispatch({data}) {
-        const message = JSON.parse(data);
-        switch (message.type) {
-            case 'map':
-                map = message.data;
-                render({map, players});
-                game.map(message.data);
-                break;
-            case 'self':
-                update_self_id(message.data);
-                break;
-            case 'players':
-                players = message.data;
-                render({map, players});
-                break;
-            default:
-                onUnknown(data);
-                break;
+    return {
+        getPosition: function() {
+            return position;
+        },
+        dispatch: function ({data}) {
+            const message = JSON.parse(data);
+            switch (message.type) {
+                case 'map':
+                    map = message.data;
+                    render({map, players});
+                    game.map(message.data);
+                    break;
+                case 'self':
+                    update_self_id(message.data);
+                    break;
+                case 'players':
+                    players = message.data;
+                    render({map, players});
+                    break;
+                default:
+                    onUnknown(data);
+                    break;
+            }
         }
     }
 };
