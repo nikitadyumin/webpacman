@@ -1,5 +1,6 @@
 const dict = require('./src/dict');
 const game = require('./src/game');
+const store = require('./src/store');
 const connection = require('./src/com/connection');
 const dispatch = require('./src/com/dispatch');
 const config = require('./src/config')();
@@ -12,6 +13,12 @@ function log(text) {
 function onClick(input, connection) {
     return () => connection.send(input.value);
 }
+const _store = store({
+    players: [],
+    selfId: null
+});
+
+_store.stream().subscribe(log);
 
 const _game = game(document.getElementById('game'));
 const url = config.debug
