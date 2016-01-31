@@ -83,11 +83,12 @@
 	    onOpen: function onOpen() {
 	        return log(dict.MESSAGE.CONNECTED);
 	    },
-	    onMessage: _dispatcher.dispatch,
 	    onClose: function onClose() {
 	        return log(dict.MESSAGE.DISCONNECTED);
 	    }
 	});
+	
+	_connection.subscribe(_dispatcher.dispatch);
 	
 	document.querySelector('body').addEventListener('keydown', function (e) {
 	    var position = _dispatcher.getPosition();
@@ -108,7 +109,8 @@
 	            console.info(e.keyCode);
 	            break;
 	    }
-	    _connection.send(protocol.getPositionUpdateMessage(position));
+	
+	    _connection.onNext(protocol.getPositionUpdateMessage(position));
 	});
 	
 	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
@@ -8765,8 +8767,6 @@
 	function store(init) {
 	    function _store(reducers) {
 	        var _Rx$Observable;
-	
-	        console.log(reducers);
 	
 	        var model = (_Rx$Observable = _rxDom2.default.Observable).when.apply(_Rx$Observable, _toConsumableArray(reducers)).startWith(init);
 	
@@ -22494,21 +22494,21 @@
 
 /***/ },
 /* 11 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
+	
+	var _rxDom = __webpack_require__(7);
+	
+	var _rxDom2 = _interopRequireDefault(_rxDom);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function connection(url, _ref) {
 	    var onOpen = _ref.onOpen;
-	    var onMessage = _ref.onMessage;
-	    var onError = _ref.onError;
 	    var onClose = _ref.onClose;
 	
-	    var ws = new WebSocket(url);
-	    ws.onopen = onOpen;
-	    ws.onmessage = onMessage;
-	    ws.onclose = onClose;
-	    return ws;
+	    return _rxDom2.default.DOM.fromWebSocket(url, null, _rxDom2.default.Observer.create(onOpen), _rxDom2.default.Observer.create(onClose));
 	}
 	
 	module.exports = connection;

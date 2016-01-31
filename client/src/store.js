@@ -6,7 +6,6 @@ import Rx from 'rx-dom';
 
 function store(init) {
     function _store(reducers) {
-        console.log(reducers);
 
         const model = Rx.Observable
             .when(...reducers)

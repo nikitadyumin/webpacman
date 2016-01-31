@@ -31,9 +31,10 @@ const _dispatcher = dispatch(_game, {
 
 const _connection = connection(url, {
     onOpen: () => log(dict.MESSAGE.CONNECTED),
-    onMessage: _dispatcher.dispatch,
     onClose: () => log(dict.MESSAGE.DISCONNECTED)
 });
+
+_connection.subscribe(_dispatcher.dispatch);
 
 document.querySelector('body')
     .addEventListener('keydown', function (e) {
@@ -55,7 +56,8 @@ document.querySelector('body')
                 console.info(e.keyCode);
                 break;
         }
-        _connection.send(protocol.getPositionUpdateMessage(position));
+
+        _connection.onNext(protocol.getPositionUpdateMessage(position));
     });
 
 document.getElementById('send')
