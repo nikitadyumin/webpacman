@@ -36,29 +36,40 @@ const _connection = connection(url, {
 
 _connection.subscribe(_dispatcher.dispatch);
 
-document.querySelector('body')
-    .addEventListener('keydown', function (e) {
-        const position = _dispatcher.getPosition();
-        switch (e.keyCode) {
-            case 37:
-                position.x -= 1;
-                break;
-            case 38:
-                position.y -= 1;
-                break;
-            case 39:
-                position.x += 1;
-                break;
-            case 40:
-                position.y += 1;
-                break;
-            default:
-                console.info(e.keyCode);
-                break;
-        }
+Rx.DOM.keydown(
+    document.querySelector('body'),
+    e => (e.preventDefault(), e.keyCode)
+).subscribe(dispatchKeypress);
 
-        _connection.onNext(protocol.getPositionUpdateMessage(position));
-    });
+function dispatchKeypress(keyCode) {
+    const position = _dispatcher.getPosition();
+    const ARROWS = {
+        LEFT: 37,
+        TOP: 38,
+        RIGHT: 39,
+        BOTTOM: 40
+    };
+
+    switch (keyCode) {
+        case ARROWS.LEFT:
+            position.x -= 1;
+            break;
+        case ARROWS.TOP:
+            position.y -= 1;
+            break;
+        case ARROWS.RIGHT:
+            position.x += 1;
+            break;
+        case ARROWS.BOTTOM:
+            position.y += 1;
+            break;
+        default:
+            console.info(keyCode);
+            break;
+    }
+
+    _connection.onNext(protocol.getPositionUpdateMessage(position));
+}
 
 document.getElementById('send')
     .addEventListener('click', onClick(document.getElementById('msg'), _connection));

@@ -90,28 +90,39 @@
 	
 	_connection.subscribe(_dispatcher.dispatch);
 	
-	document.querySelector('body').addEventListener('keydown', function (e) {
+	Rx.DOM.keydown(document.querySelector('body'), function (e) {
+	    return e.preventDefault(), e.keyCode;
+	}).subscribe(dispatchKeypress);
+	
+	function dispatchKeypress(keyCode) {
 	    var position = _dispatcher.getPosition();
-	    switch (e.keyCode) {
-	        case 37:
+	    var ARROWS = {
+	        LEFT: 37,
+	        TOP: 38,
+	        RIGHT: 39,
+	        BOTTOM: 40
+	    };
+	
+	    switch (keyCode) {
+	        case ARROWS.LEFT:
 	            position.x -= 1;
 	            break;
-	        case 38:
+	        case ARROWS.TOP:
 	            position.y -= 1;
 	            break;
-	        case 39:
+	        case ARROWS.RIGHT:
 	            position.x += 1;
 	            break;
-	        case 40:
+	        case ARROWS.BOTTOM:
 	            position.y += 1;
 	            break;
 	        default:
-	            console.info(e.keyCode);
+	            console.info(keyCode);
 	            break;
 	    }
 	
 	    _connection.onNext(protocol.getPositionUpdateMessage(position));
-	});
+	}
 	
 	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
 
