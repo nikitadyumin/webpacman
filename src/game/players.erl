@@ -44,6 +44,10 @@ loop(MaxId, Connections, Update) ->
       Clb(Connections),
       loop(MaxId, Connections, false);
 
+    {get_one, Connection, Clb} ->
+      Clb(maps:get(Connection, Connections)),
+      loop(MaxId, Connections, false);
+
     {add_score, Connection, Score} ->
       {Id, _oldX, _oldY, _oldScore} = maps:get(Connection, Connections),
       loop(MaxId, maps:put(Connection, {Id, _oldX, _oldY, _oldScore + Score}, Connections), true);

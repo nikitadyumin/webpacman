@@ -38,5 +38,6 @@ update(Connection, Position, TileCode) when TileCode == 140 -> % bonus
 update(Connection, Position, TileCode) when TileCode >= 100 andalso TileCode < 200 -> % generally traversable
 gproc:send({r, l, players}, {update, Connection, Position});
 
-update(_Connection, _Position, _TileCode) ->
-  erlang:display(<<"illigal position">>).
+update(Connection, _Position, _TileCode) ->
+  gproc:send({r, l, players}, {get_one, Connection,
+    fun(Update) -> gproc:send({r, l, messenger}, {send_self_update, Connection, Update}) end}).
