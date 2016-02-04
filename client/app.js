@@ -48,9 +48,11 @@ Rx.DOM.keydown(
 ).withLatestFrom(model).subscribe(dispatchKeypress);
 
 function dispatchKeypress([keyCode, model]) {
+    const id = model.self.id;
+    const self = model.players.filter(p => p.id === id).pop();
     const position = {
-        x: model.self.x,
-        y: model.self.y
+        x: self.x,
+        y: self.y
     };
 
     const ARROWS = {
@@ -78,7 +80,7 @@ function dispatchKeypress([keyCode, model]) {
             break;
     }
 
-    _connection.onNext(protocol.getPositionUpdateMessage(position));
+    _connection.send(protocol.getPositionUpdateMessage(position));
 }
 
 document.getElementById('send')

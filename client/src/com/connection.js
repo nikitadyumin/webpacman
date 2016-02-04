@@ -1,10 +1,16 @@
-import Rx from 'rx-dom';
+import { EventEmitter } from 'events';
+import Rx from 'rx';
 
 function connection(url, {onOpen, onClose}) {
-    return Rx.DOM.fromWebSocket(url, null,
-        Rx.Observer.create(onOpen),
-        Rx.Observer.create(onClose)
-    );
+    const emitter = new EventEmitter();
+    const ws = new WebSocket(url);
+    ws.onclose = onClose;
+    ws.onopen = onOpen;
+    ws.onmessage = (ev) => emitter.emit('message', ev);
+
+    return Object.assign(Rx.Observable.fromEvent(emitter, 'message'), {
+        send: (msg) => ws.send(msg)
+    });
 }
 
 module.exports = connection;
