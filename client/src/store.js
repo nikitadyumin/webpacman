@@ -5,19 +5,14 @@
 import Rx from 'rx-dom';
 
 function store(init) {
-    function _store(reducers) {
-
-        const model = Rx.Observable
-            .when(...reducers)
-            .startWith(init);
-
+    function _store($model) {
         return {
-            plug: (stream$, reducer) => _store(reducers.concat(stream$.thenDo(reducer))),
-            stream: () => model
+            plug: (stream$, reducer) => _store($model.combineLatest(stream$, reducer)),
+            stream: () => $model
         };
     }
 
-    return _store([]);
+    return _store(Rx.Observable.of(init));
 }
 
 module.exports = store;

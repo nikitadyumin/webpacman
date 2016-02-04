@@ -1,10 +1,11 @@
 const dict = require('./src/dict');
-const game = require('./src/game');
 const store = require('./src/store');
 const connection = require('./src/com/connection');
 const dispatch = require('./src/com/dispatch');
 const config = require('./src/config')();
 const protocol = require('./src/com/protocol');
+import { merge } from 'ramda';
+import { render } from './src/render';
 
 function log(text) {
     console.info(text);
@@ -13,36 +14,45 @@ function log(text) {
 function onClick(input, connection) {
     return () => connection.send(input.value);
 }
+
 const _store = store({
     players: [],
-    selfId: null
+    map: [],
+    self: {}
 });
 
-_store.stream().subscribe(log);
-
-const _game = game(document.getElementById('game'));
 const url = config.debug
     ? 'ws://localhost:8080/websocket'
     : 'ws://fierce-basin-86946.herokuapp.com/websocket';
-
-const _dispatcher = dispatch(_game, {
-    onUnknown: (msg) => log(dict.MESSAGE.INCOMING + msg)
-});
 
 const _connection = connection(url, {
     onOpen: () => log(dict.MESSAGE.CONNECTED),
     onClose: () => log(dict.MESSAGE.DISCONNECTED)
 });
+_connection.subscribe(log);
 
-_connection.subscribe(_dispatcher.dispatch);
+const {players$, self$, map$} = dispatch(_connection);
+
+const model = _store
+    .plug(players$, (s, u) => merge(s, {players: u}))
+    .plug(self$, (s, u) => merge(s, {self: u}))
+    .plug(map$, (s, u) => merge(s, {map: u}))
+    .stream();
+
+model.subscribe(log);
+model.subscribe(render(document.querySelector('#current')));
 
 Rx.DOM.keydown(
     document.querySelector('body'),
     e => (e.preventDefault(), e.keyCode)
-).subscribe(dispatchKeypress);
+).withLatestFrom(model).subscribe(dispatchKeypress);
 
-function dispatchKeypress(keyCode) {
-    const position = _dispatcher.getPosition();
+function dispatchKeypress([keyCode, model]) {
+    const position = {
+        x: model.self.x,
+        y: model.self.y
+    };
+
     const ARROWS = {
         LEFT: 37,
         TOP: 38,
