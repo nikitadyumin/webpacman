@@ -2,7 +2,9 @@
  * Created by ndyumin on 04.02.2016.
  */
 
-function players_renderer(elem) {
+import { render as block_renderer } from './Map';
+
+function debug_players_renderer(elem) {
     const clean = () =>
         Array.from(elem.querySelectorAll('span'))
             .forEach(e => {
@@ -20,7 +22,7 @@ function players_renderer(elem) {
     };
 }
 
-function map_renderer(elem) {
+function debug_map_renderer(elem) {
     return (data) => elem.innerHTML = data.map(line =>
         '<div>' + line.map(cell =>
             `<span class="c${cell}">${cell}</span>`
@@ -28,16 +30,18 @@ function map_renderer(elem) {
     ).join('');
 }
 
-function render(element) {
-    const players = players_renderer(element);
-    const map = map_renderer(element);
+function render(context, debug_element) {
+    const debug_players = debug_players_renderer(debug_element);
+    const debug_map = debug_map_renderer(debug_element);
+    const render_map = block_renderer(context);
+
     return (model) => {
-        map(model.map);
-        players(model.players);
+        debug_map(model.map);
+        debug_players(model.players);
+        render_map(model.map); // so slow >_<
     };
 }
 
 module.exports = {
-    render,
-    players_renderer
+    render
 };

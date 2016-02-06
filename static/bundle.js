@@ -40,22 +40,38 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
-/* 0 */
+/******/ ({
+
+/***/ 0:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var dict = __webpack_require__(1);
-	var game = __webpack_require__(2);
-	var store = __webpack_require__(6);
-	var connection = __webpack_require__(11);
-	var dispatch = __webpack_require__(12);
-	var config = __webpack_require__(13)();
-	var protocol = __webpack_require__(14);
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
+	var _ramda = __webpack_require__(1);
+	
+	var _render = __webpack_require__(2);
+	
+	var dict = __webpack_require__(3);
+	var store = __webpack_require__(4);
+	var connection = __webpack_require__(9);
+	var dispatch = __webpack_require__(10);
+	var config = __webpack_require__(11)();
+	var protocol = __webpack_require__(12);
 	
 	function log(text) {
 	    console.info(text);
+	}
+	
+	function context(element) {
+	    var blockSize = element.offsetWidth / 19,
+	        canvas = document.createElement('canvas');
+	
+	    canvas.setAttribute('width', blockSize * 19 + 'px');
+	    canvas.setAttribute('height', blockSize * 22 + 65 + 'px');
+	    element.appendChild(canvas);
+	    return canvas.getContext('2d');
 	}
 	
 	function onClick(input, connection) {
@@ -63,21 +79,14 @@
 	        return connection.send(input.value);
 	    };
 	}
+	
 	var _store = store({
 	    players: [],
-	    selfId: null
+	    map: [],
+	    self: {}
 	});
 	
-	_store.stream().subscribe(log);
-	
-	var _game = game(document.getElementById('game'));
 	var url = config.debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket';
-	
-	var _dispatcher = dispatch(_game, {
-	    onUnknown: function onUnknown(msg) {
-	        return log(dict.MESSAGE.INCOMING + msg);
-	    }
-	});
 	
 	var _connection = connection(url, {
 	    onOpen: function onOpen() {
@@ -87,15 +96,44 @@
 	        return log(dict.MESSAGE.DISCONNECTED);
 	    }
 	});
+	_connection.subscribe(log);
 	
-	_connection.subscribe(_dispatcher.dispatch);
+	var _dispatch = dispatch(_connection);
+	
+	var players$ = _dispatch.players$;
+	var self$ = _dispatch.self$;
+	var map$ = _dispatch.map$;
+	
+	var model = _store.plug(players$, function (s, u) {
+	    return (0, _ramda.merge)(s, { players: u });
+	}).plug(self$, function (s, u) {
+	    return (0, _ramda.merge)(s, { self: u });
+	}).plug(map$, function (s, u) {
+	    return (0, _ramda.merge)(s, { map: u });
+	}).stream();
+	
+	model.subscribe(log);
+	model.subscribe((0, _render.render)(context(document.querySelector('#game')), document.querySelector('#current')));
 	
 	Rx.DOM.keydown(document.querySelector('body'), function (e) {
 	    return e.preventDefault(), e.keyCode;
-	}).subscribe(dispatchKeypress);
+	}).withLatestFrom(model).subscribe(dispatchKeypress);
 	
-	function dispatchKeypress(keyCode) {
-	    var position = _dispatcher.getPosition();
+	function dispatchKeypress(_ref) {
+	    var _ref2 = _slicedToArray(_ref, 2);
+	
+	    var keyCode = _ref2[0];
+	    var model = _ref2[1];
+	
+	    var id = model.self.id;
+	    var self = model.players.filter(function (p) {
+	        return p.id === id;
+	    }).pop();
+	    var position = {
+	        x: self.x,
+	        y: self.y
+	    };
+	
 	    var ARROWS = {
 	        LEFT: 37,
 	        TOP: 38,
@@ -121,150 +159,14 @@
 	            break;
 	    }
 	
-	    _connection.onNext(protocol.getPositionUpdateMessage(position));
+	    _connection.send(protocol.getPositionUpdateMessage(position));
 	}
 	
 	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
 
 /***/ },
-/* 1 */
-/***/ function(module, exports) {
 
-	'use strict';
-	
-	module.exports = {
-	    MESSAGE: {
-	        CONNECTED: 'connected',
-	        DISCONNECTED: 'disconnected',
-	        INCOMING: 'msg: '
-	    }
-	};
-
-/***/ },
-/* 2 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var map = __webpack_require__(3);
-	
-	module.exports = function gameStarter(element) {
-	    var blockSize = element.offsetWidth / 19,
-	        canvas = document.createElement('canvas');
-	
-	    canvas.setAttribute('width', blockSize * 19 + 'px');
-	    canvas.setAttribute('height', blockSize * 22 + 65 + 'px');
-	    element.appendChild(canvas);
-	    var ctx = canvas.getContext('2d');
-	    var mapRender = map.render(ctx);
-	    return { map: mapRender };
-	};
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var R = __webpack_require__(4);
-	var CONSTANTS = __webpack_require__(5);
-	var drawHorizontalLine = function drawHorizontalLine(context, x, y) {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawVerticalLine = function drawVerticalLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomRightLine = function drawBottomRightLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomLeftLine = function drawBottomLeftLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawTopLeftLine = function drawTopLeftLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawTopRightLine = function drawTopRightLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawTopCenterLine = function drawTopCenterLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomCenterLine = function drawBottomCenterLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawLeftCenterLine = function drawLeftCenterLine(context, x, y) {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawRightCenterLine = function drawRightCenterLine(context, x, y) {
-	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomCurve = function drawBottomCurve(context, x, y) {
-	    drawBottomLeftLine(context, x, y);
-	    drawBottomRightLine(context, x, y);
-	};
-	
-	var drawLeftCurve = function drawLeftCurve(context, x, y) {
-	    drawBottomLeftLine(context, x, y);
-	    drawTopLeftLine(context, x, y);
-	};
-	
-	var drawRightCurve = function drawRightCurve(context, x, y) {
-	    drawBottomRightLine(context, x, y);
-	    drawTopRightLine(context, x, y);
-	};
-	
-	var drawTopCurve = function drawTopCurve(context, x, y) {
-	    drawTopRightLine(context, x, y);
-	    drawTopLeftLine(context, x, y);
-	};
-	
-	var renderNonTraversable = function renderNonTraversable(context, x, y, block) {
-	    context.beginPath();
-	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
-	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
-	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
-	
-	    var action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(function (msg) {
-	        return console.log(msg);
-	    })]])(block);
-	    action(context, x, y);
-	    context.stroke();
-	};
-	var renderBlocks = R.curry(function (context, blocks) {
-	    blocks.forEach(function (line, y) {
-	        line.forEach(function (block, x) {
-	            var action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(function (msg) {
-	                return console.log(msg);
-	            })]])(block);
-	            action(context, x, y, block);
-	        });
-	    });
-	});
-	
-	module.exports = { render: renderBlocks };
-
-/***/ },
-/* 4 */
+/***/ 1:
 /***/ function(module, exports, __webpack_require__) {
 
 	//  Ramda v0.19.1
@@ -8716,88 +8618,110 @@
 
 
 /***/ },
-/* 5 */
-/***/ function(module, exports) {
 
-	'use strict';
-	
-	var PACMAN = {
-	    TRAVERSABLE: { l: 100, r: 199 },
-	    NON_TRAVERSABLE: { l: 200, r: 299 }
-	};
-	
-	var GENERAL = {
-	    blockSize: 20
-	};
-	
-	var WALLS_OPTION = {
-	    strokeStyle: '#2c2a80',
-	    lineWidth: 5,
-	    lineCap: 'round'
-	};
-	var WALLS = {
-	    HORIZONTAL_LINE: 200,
-	    VERTICAL_LINE: 201,
-	    BOTTOM_RIGHT_LINE: 202,
-	    BOTTOM_LEFT_LINE: 203,
-	    TOP_RIGHT_LINE: 204,
-	    TOP_LEFT_LINE: 205,
-	    TOP_CENTER_LINE: 206,
-	    BOTTOM_CENTER_LINE: 207,
-	    LEFT_CENTER_LINE: 208,
-	    RIGHT_CENTER_LINE: 209,
-	    BOTTOM_CURVE: 210,
-	    TOP_CURVE: 211,
-	    LEFT_CURVE: 212,
-	    RIGHT_CURVE: 213
-	};
-	
-	module.exports = {
-	    PACMAN: PACMAN,
-	    GENERAL: GENERAL,
-	    WALLS_OPTION: WALLS_OPTION,
-	    WALLS: WALLS
-	};
-
-/***/ },
-/* 6 */
+/***/ 2:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var _rxDom = __webpack_require__(7);
+	var _Map = __webpack_require__(273);
+	
+	function debug_players_renderer(elem) {
+	    var clean = function clean() {
+	        return Array.from(elem.querySelectorAll('span')).forEach(function (e) {
+	            e.setAttribute('data-player', 'false');
+	        });
+	    };
+	
+	    return function (players) {
+	        clean();
+	        players.forEach(function (_ref) {
+	            var id = _ref.id;
+	            var x = _ref.x;
+	            var y = _ref.y;
+	            return elem.childNodes[y].childNodes[x].setAttribute('data-player', self === id ? 'self' : 'player');
+	        });
+	    };
+	} /**
+	   * Created by ndyumin on 04.02.2016.
+	   */
+	
+	function debug_map_renderer(elem) {
+	    return function (data) {
+	        return elem.innerHTML = data.map(function (line) {
+	            return '<div>' + line.map(function (cell) {
+	                return '<span class="c' + cell + '">' + cell + '</span>';
+	            }).join('') + '</div>';
+	        }).join('');
+	    };
+	}
+	
+	function render(context, debug_element) {
+	    var debug_players = debug_players_renderer(debug_element);
+	    var debug_map = debug_map_renderer(debug_element);
+	    var render_map = (0, _Map.render)(context);
+	
+	    return function (model) {
+	        debug_map(model.map);
+	        debug_players(model.players);
+	        render_map(model.map); // so slow >_<
+	    };
+	}
+	
+	module.exports = {
+	    render: render
+	};
+
+/***/ },
+
+/***/ 3:
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	module.exports = {
+	    MESSAGE: {
+	        CONNECTED: 'connected',
+	        DISCONNECTED: 'disconnected',
+	        INCOMING: 'msg: '
+	    }
+	};
+
+/***/ },
+
+/***/ 4:
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var _rxDom = __webpack_require__(5);
 	
 	var _rxDom2 = _interopRequireDefault(_rxDom);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } } /**
-	                                                                                                                                                                                                     * Created by ndyumin on 30.01.2016.
-	                                                                                                                                                                                                     */
-	
 	function store(init) {
-	    function _store(reducers) {
-	        var _Rx$Observable;
-	
-	        var model = (_Rx$Observable = _rxDom2.default.Observable).when.apply(_Rx$Observable, _toConsumableArray(reducers)).startWith(init);
-	
+	    function _store($model) {
 	        return {
 	            plug: function plug(stream$, reducer) {
-	                return _store(reducers.concat(stream$.thenDo(reducer)));
+	                return _store($model.combineLatest(stream$, reducer));
 	            },
 	            stream: function stream() {
-	                return model;
+	                return $model;
 	            }
 	        };
 	    }
 	
-	    return _store([]);
-	}
+	    return _store(_rxDom2.default.Observable.of(init));
+	} /**
+	   * Created by ndyumin on 30.01.2016.
+	   */
 	
 	module.exports = store;
 
 /***/ },
-/* 7 */
+
+/***/ 5:
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {// Copyright (c) Microsoft, Inc. All rights reserved. See License.txt in the project root for license information.
@@ -8823,7 +8747,7 @@
 	
 	  // Because of build optimizers
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(9)], __WEBPACK_AMD_DEFINE_RESULT__ = function (Rx, exports) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(7)], __WEBPACK_AMD_DEFINE_RESULT__ = function (Rx, exports) {
 	      return factory(root, exports, Rx);
 	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof module === 'object' && module && module.exports === freeExports) {
@@ -10186,10 +10110,11 @@
 	
 	  return Rx;
 	}));
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }())))
 
 /***/ },
-/* 8 */
+
+/***/ 6:
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -10205,7 +10130,8 @@
 
 
 /***/ },
-/* 9 */
+
+/***/ 7:
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global, process) {// Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
@@ -22404,10 +22330,11 @@
 	
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)(module), (function() { return this; }()), __webpack_require__(10)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }()), __webpack_require__(8)))
 
 /***/ },
-/* 10 */
+
+/***/ 8:
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -22504,14 +22431,17 @@
 
 
 /***/ },
-/* 11 */
+
+/***/ 9:
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var _rxDom = __webpack_require__(7);
+	var _events = __webpack_require__(272);
 	
-	var _rxDom2 = _interopRequireDefault(_rxDom);
+	var _rx = __webpack_require__(7);
+	
+	var _rx2 = _interopRequireDefault(_rx);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -22519,98 +22449,56 @@
 	    var onOpen = _ref.onOpen;
 	    var onClose = _ref.onClose;
 	
-	    return _rxDom2.default.DOM.fromWebSocket(url, null, _rxDom2.default.Observer.create(onOpen), _rxDom2.default.Observer.create(onClose));
+	    var emitter = new _events.EventEmitter();
+	    var ws = new WebSocket(url);
+	    ws.onclose = onClose;
+	    ws.onopen = onOpen;
+	    ws.onmessage = function (ev) {
+	        return emitter.emit('message', ev);
+	    };
+	
+	    return Object.assign(_rx2.default.Observable.fromEvent(emitter, 'message'), {
+	        send: function send(msg) {
+	            return ws.send(msg);
+	        }
+	    });
 	}
 	
 	module.exports = connection;
 
 /***/ },
-/* 12 */
+
+/***/ 10:
 /***/ function(module, exports) {
 
 	'use strict';
 	
-	module.exports = function (game, _ref) {
-	    var onUnknown = _ref.onUnknown;
-	
-	    var current = document.getElementById('current');
-	    var debug_render_map = function debug_render_map(data) {
-	        return current.innerHTML = data.map(function (line) {
-	            return '<div>' + line.map(function (cell) {
-	                return '<span class="c' + cell + '">' + cell + '</span>';
-	            }).join('') + '</div>';
-	        }).join('');
-	    };
-	
-	    var clean = function clean() {
-	        return Array.from(document.querySelectorAll('#current span')).forEach(function (e) {
-	            e.setAttribute('data-player', 'false');
-	        });
-	    };
-	
-	    var self = null;
-	    var position = null;
-	    var map = [];
-	    var players = [];
-	
-	    var update_self_id = function update_self_id(_ref2) {
-	        var id = _ref2.id;
-	        var x = _ref2.x;
-	        var y = _ref2.y;
-	
-	        self = id;
-	        position = { x: x, y: y };
-	    };
-	
-	    var debug_render_players = function debug_render_players(players) {
-	        clean();
-	        players.forEach(function (_ref3) {
-	            var id = _ref3.id;
-	            var x = _ref3.x;
-	            var y = _ref3.y;
-	            return current.childNodes[y].childNodes[x].setAttribute('data-player', self === id ? 'self' : 'player');
-	        });
-	    };
-	
-	    function render(_ref4) {
-	        var map = _ref4.map;
-	        var players = _ref4.players;
-	
-	        debug_render_map(map);
-	        debug_render_players(players);
-	    }
-	
+	module.exports = function (connection) {
+	    var messages = connection.map(function (message) {
+	        return JSON.parse(message.data);
+	    });
 	    return {
-	        getPosition: function getPosition() {
-	            return position;
-	        },
-	        dispatch: function dispatch(_ref5) {
-	            var data = _ref5.data;
-	
-	            var message = JSON.parse(data);
-	            switch (message.type) {
-	                case 'map':
-	                    map = message.data;
-	                    render({ map: map, players: players });
-	                    game.map(message.data);
-	                    break;
-	                case 'self':
-	                    update_self_id(message.data);
-	                    break;
-	                case 'players':
-	                    players = message.data;
-	                    render({ map: map, players: players });
-	                    break;
-	                default:
-	                    onUnknown(data);
-	                    break;
-	            }
-	        }
+	        players$: messages.filter(function (m) {
+	            return m.type === 'players';
+	        }).map(function (m) {
+	            return m.data;
+	        }),
+	        self$: messages.filter(function (m) {
+	            return m.type === 'self';
+	        }).map(function (m) {
+	            return m.data;
+	        }),
+	        map$: messages.filter(function (m) {
+	            return m.type === 'map';
+	        }).map(function (m) {
+	            return m.data;
+	        })
 	    };
 	};
 
 /***/ },
-/* 13 */
+
+/***/ 11:
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(R) {'use strict';
@@ -22628,10 +22516,11 @@
 	
 	    return Object.assign({}, defaults, urlOptions, opts);
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
-/* 14 */
+
+/***/ 12:
 /***/ function(module, exports) {
 
 	"use strict";
@@ -22645,6 +22534,461 @@
 	    }
 	};
 
+/***/ },
+
+/***/ 272:
+/***/ function(module, exports) {
+
+	// Copyright Joyent, Inc. and other Node contributors.
+	//
+	// Permission is hereby granted, free of charge, to any person obtaining a
+	// copy of this software and associated documentation files (the
+	// "Software"), to deal in the Software without restriction, including
+	// without limitation the rights to use, copy, modify, merge, publish,
+	// distribute, sublicense, and/or sell copies of the Software, and to permit
+	// persons to whom the Software is furnished to do so, subject to the
+	// following conditions:
+	//
+	// The above copyright notice and this permission notice shall be included
+	// in all copies or substantial portions of the Software.
+	//
+	// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+	// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+	// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+	// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+	// USE OR OTHER DEALINGS IN THE SOFTWARE.
+	
+	function EventEmitter() {
+	  this._events = this._events || {};
+	  this._maxListeners = this._maxListeners || undefined;
+	}
+	module.exports = EventEmitter;
+	
+	// Backwards-compat with node 0.10.x
+	EventEmitter.EventEmitter = EventEmitter;
+	
+	EventEmitter.prototype._events = undefined;
+	EventEmitter.prototype._maxListeners = undefined;
+	
+	// By default EventEmitters will print a warning if more than 10 listeners are
+	// added to it. This is a useful default which helps finding memory leaks.
+	EventEmitter.defaultMaxListeners = 10;
+	
+	// Obviously not all Emitters should be limited to 10. This function allows
+	// that to be increased. Set to zero for unlimited.
+	EventEmitter.prototype.setMaxListeners = function(n) {
+	  if (!isNumber(n) || n < 0 || isNaN(n))
+	    throw TypeError('n must be a positive number');
+	  this._maxListeners = n;
+	  return this;
+	};
+	
+	EventEmitter.prototype.emit = function(type) {
+	  var er, handler, len, args, i, listeners;
+	
+	  if (!this._events)
+	    this._events = {};
+	
+	  // If there is no 'error' event listener then throw.
+	  if (type === 'error') {
+	    if (!this._events.error ||
+	        (isObject(this._events.error) && !this._events.error.length)) {
+	      er = arguments[1];
+	      if (er instanceof Error) {
+	        throw er; // Unhandled 'error' event
+	      }
+	      throw TypeError('Uncaught, unspecified "error" event.');
+	    }
+	  }
+	
+	  handler = this._events[type];
+	
+	  if (isUndefined(handler))
+	    return false;
+	
+	  if (isFunction(handler)) {
+	    switch (arguments.length) {
+	      // fast cases
+	      case 1:
+	        handler.call(this);
+	        break;
+	      case 2:
+	        handler.call(this, arguments[1]);
+	        break;
+	      case 3:
+	        handler.call(this, arguments[1], arguments[2]);
+	        break;
+	      // slower
+	      default:
+	        args = Array.prototype.slice.call(arguments, 1);
+	        handler.apply(this, args);
+	    }
+	  } else if (isObject(handler)) {
+	    args = Array.prototype.slice.call(arguments, 1);
+	    listeners = handler.slice();
+	    len = listeners.length;
+	    for (i = 0; i < len; i++)
+	      listeners[i].apply(this, args);
+	  }
+	
+	  return true;
+	};
+	
+	EventEmitter.prototype.addListener = function(type, listener) {
+	  var m;
+	
+	  if (!isFunction(listener))
+	    throw TypeError('listener must be a function');
+	
+	  if (!this._events)
+	    this._events = {};
+	
+	  // To avoid recursion in the case that type === "newListener"! Before
+	  // adding it to the listeners, first emit "newListener".
+	  if (this._events.newListener)
+	    this.emit('newListener', type,
+	              isFunction(listener.listener) ?
+	              listener.listener : listener);
+	
+	  if (!this._events[type])
+	    // Optimize the case of one listener. Don't need the extra array object.
+	    this._events[type] = listener;
+	  else if (isObject(this._events[type]))
+	    // If we've already got an array, just append.
+	    this._events[type].push(listener);
+	  else
+	    // Adding the second element, need to change to array.
+	    this._events[type] = [this._events[type], listener];
+	
+	  // Check for listener leak
+	  if (isObject(this._events[type]) && !this._events[type].warned) {
+	    if (!isUndefined(this._maxListeners)) {
+	      m = this._maxListeners;
+	    } else {
+	      m = EventEmitter.defaultMaxListeners;
+	    }
+	
+	    if (m && m > 0 && this._events[type].length > m) {
+	      this._events[type].warned = true;
+	      console.error('(node) warning: possible EventEmitter memory ' +
+	                    'leak detected. %d listeners added. ' +
+	                    'Use emitter.setMaxListeners() to increase limit.',
+	                    this._events[type].length);
+	      if (typeof console.trace === 'function') {
+	        // not supported in IE 10
+	        console.trace();
+	      }
+	    }
+	  }
+	
+	  return this;
+	};
+	
+	EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+	
+	EventEmitter.prototype.once = function(type, listener) {
+	  if (!isFunction(listener))
+	    throw TypeError('listener must be a function');
+	
+	  var fired = false;
+	
+	  function g() {
+	    this.removeListener(type, g);
+	
+	    if (!fired) {
+	      fired = true;
+	      listener.apply(this, arguments);
+	    }
+	  }
+	
+	  g.listener = listener;
+	  this.on(type, g);
+	
+	  return this;
+	};
+	
+	// emits a 'removeListener' event iff the listener was removed
+	EventEmitter.prototype.removeListener = function(type, listener) {
+	  var list, position, length, i;
+	
+	  if (!isFunction(listener))
+	    throw TypeError('listener must be a function');
+	
+	  if (!this._events || !this._events[type])
+	    return this;
+	
+	  list = this._events[type];
+	  length = list.length;
+	  position = -1;
+	
+	  if (list === listener ||
+	      (isFunction(list.listener) && list.listener === listener)) {
+	    delete this._events[type];
+	    if (this._events.removeListener)
+	      this.emit('removeListener', type, listener);
+	
+	  } else if (isObject(list)) {
+	    for (i = length; i-- > 0;) {
+	      if (list[i] === listener ||
+	          (list[i].listener && list[i].listener === listener)) {
+	        position = i;
+	        break;
+	      }
+	    }
+	
+	    if (position < 0)
+	      return this;
+	
+	    if (list.length === 1) {
+	      list.length = 0;
+	      delete this._events[type];
+	    } else {
+	      list.splice(position, 1);
+	    }
+	
+	    if (this._events.removeListener)
+	      this.emit('removeListener', type, listener);
+	  }
+	
+	  return this;
+	};
+	
+	EventEmitter.prototype.removeAllListeners = function(type) {
+	  var key, listeners;
+	
+	  if (!this._events)
+	    return this;
+	
+	  // not listening for removeListener, no need to emit
+	  if (!this._events.removeListener) {
+	    if (arguments.length === 0)
+	      this._events = {};
+	    else if (this._events[type])
+	      delete this._events[type];
+	    return this;
+	  }
+	
+	  // emit removeListener for all listeners on all events
+	  if (arguments.length === 0) {
+	    for (key in this._events) {
+	      if (key === 'removeListener') continue;
+	      this.removeAllListeners(key);
+	    }
+	    this.removeAllListeners('removeListener');
+	    this._events = {};
+	    return this;
+	  }
+	
+	  listeners = this._events[type];
+	
+	  if (isFunction(listeners)) {
+	    this.removeListener(type, listeners);
+	  } else if (listeners) {
+	    // LIFO order
+	    while (listeners.length)
+	      this.removeListener(type, listeners[listeners.length - 1]);
+	  }
+	  delete this._events[type];
+	
+	  return this;
+	};
+	
+	EventEmitter.prototype.listeners = function(type) {
+	  var ret;
+	  if (!this._events || !this._events[type])
+	    ret = [];
+	  else if (isFunction(this._events[type]))
+	    ret = [this._events[type]];
+	  else
+	    ret = this._events[type].slice();
+	  return ret;
+	};
+	
+	EventEmitter.prototype.listenerCount = function(type) {
+	  if (this._events) {
+	    var evlistener = this._events[type];
+	
+	    if (isFunction(evlistener))
+	      return 1;
+	    else if (evlistener)
+	      return evlistener.length;
+	  }
+	  return 0;
+	};
+	
+	EventEmitter.listenerCount = function(emitter, type) {
+	  return emitter.listenerCount(type);
+	};
+	
+	function isFunction(arg) {
+	  return typeof arg === 'function';
+	}
+	
+	function isNumber(arg) {
+	  return typeof arg === 'number';
+	}
+	
+	function isObject(arg) {
+	  return typeof arg === 'object' && arg !== null;
+	}
+	
+	function isUndefined(arg) {
+	  return arg === void 0;
+	}
+
+
+/***/ },
+
+/***/ 273:
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	var R = __webpack_require__(1);
+	var CONSTANTS = __webpack_require__(274);
+	var drawHorizontalLine = function drawHorizontalLine(context, x, y) {
+	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawVerticalLine = function drawVerticalLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomRightLine = function drawBottomRightLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomLeftLine = function drawBottomLeftLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopLeftLine = function drawTopLeftLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopRightLine = function drawTopRightLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopCenterLine = function drawTopCenterLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomCenterLine = function drawBottomCenterLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawLeftCenterLine = function drawLeftCenterLine(context, x, y) {
+	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawRightCenterLine = function drawRightCenterLine(context, x, y) {
+	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomCurve = function drawBottomCurve(context, x, y) {
+	    drawBottomLeftLine(context, x, y);
+	    drawBottomRightLine(context, x, y);
+	};
+	
+	var drawLeftCurve = function drawLeftCurve(context, x, y) {
+	    drawBottomLeftLine(context, x, y);
+	    drawTopLeftLine(context, x, y);
+	};
+	
+	var drawRightCurve = function drawRightCurve(context, x, y) {
+	    drawBottomRightLine(context, x, y);
+	    drawTopRightLine(context, x, y);
+	};
+	
+	var drawTopCurve = function drawTopCurve(context, x, y) {
+	    drawTopRightLine(context, x, y);
+	    drawTopLeftLine(context, x, y);
+	};
+	
+	var renderNonTraversable = function renderNonTraversable(context, x, y, block) {
+	    context.beginPath();
+	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
+	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
+	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
+	
+	    var action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(function (msg) {
+	        return console.log(msg);
+	    })]])(block);
+	    action(context, x, y);
+	    context.stroke();
+	};
+	var renderBlocks = R.curry(function (context, blocks) {
+	    blocks.forEach(function (line, y) {
+	        line.forEach(function (block, x) {
+	            var action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(function (msg) {
+	                return console.log(msg);
+	            })]])(block);
+	            action(context, x, y, block);
+	        });
+	    });
+	});
+	
+	module.exports = { render: renderBlocks };
+
+/***/ },
+
+/***/ 274:
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	var PACMAN = {
+	    TRAVERSABLE: { l: 100, r: 199 },
+	    NON_TRAVERSABLE: { l: 200, r: 299 }
+	};
+	
+	var GENERAL = {
+	    blockSize: 20
+	};
+	
+	var WALLS_OPTION = {
+	    strokeStyle: '#2c2a80',
+	    lineWidth: 5,
+	    lineCap: 'round'
+	};
+	var WALLS = {
+	    HORIZONTAL_LINE: 200,
+	    VERTICAL_LINE: 201,
+	    BOTTOM_RIGHT_LINE: 202,
+	    BOTTOM_LEFT_LINE: 203,
+	    TOP_RIGHT_LINE: 204,
+	    TOP_LEFT_LINE: 205,
+	    TOP_CENTER_LINE: 206,
+	    BOTTOM_CENTER_LINE: 207,
+	    LEFT_CENTER_LINE: 208,
+	    RIGHT_CENTER_LINE: 209,
+	    BOTTOM_CURVE: 210,
+	    TOP_CURVE: 211,
+	    LEFT_CURVE: 212,
+	    RIGHT_CURVE: 213
+	};
+	
+	module.exports = {
+	    PACMAN: PACMAN,
+	    GENERAL: GENERAL,
+	    WALLS_OPTION: WALLS_OPTION,
+	    WALLS: WALLS
+	};
+
 /***/ }
-/******/ ]);
+
+/******/ });
 //# sourceMappingURL=bundle.js.map

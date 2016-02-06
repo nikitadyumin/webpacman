@@ -11,6 +11,16 @@ function log(text) {
     console.info(text);
 }
 
+function context(element) {
+    const blockSize = element.offsetWidth / 19,
+        canvas = document.createElement('canvas');
+
+    canvas.setAttribute('width', (blockSize * 19) + 'px');
+    canvas.setAttribute('height', (blockSize * 22) + 65 + 'px');
+    element.appendChild(canvas);
+    return canvas.getContext('2d');
+}
+
 function onClick(input, connection) {
     return () => connection.send(input.value);
 }
@@ -40,7 +50,9 @@ const model = _store
     .stream();
 
 model.subscribe(log);
-model.subscribe(render(document.querySelector('#current')));
+model.subscribe(render(
+    context(document.querySelector('#game')),
+    document.querySelector('#current')));
 
 Rx.DOM.keydown(
     document.querySelector('body'),
