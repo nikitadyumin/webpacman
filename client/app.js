@@ -6,6 +6,7 @@ const config = require('./src/config')();
 const protocol = require('./src/com/protocol');
 import { merge } from 'ramda';
 import { render } from './src/render';
+import { dispatchKeypress } from './src/input';
 
 function log(text) {
     console.info(text);
@@ -39,7 +40,6 @@ const _connection = connection(url, {
     onOpen: () => log(dict.MESSAGE.CONNECTED),
     onClose: () => log(dict.MESSAGE.DISCONNECTED)
 });
-_connection.subscribe(log);
 
 const {players$, self$, map$} = dispatch(_connection);
 
@@ -49,51 +49,20 @@ const model = _store
     .plug(map$, (s, u) => merge(s, {map: u}))
     .stream();
 
-model.subscribe(log);
 model.subscribe(render(
     context(document.querySelector('#game')),
-    document.querySelector('#current')));
+    document.querySelector('#current'))
+);
 
 Rx.DOM.keydown(
     document.querySelector('body'),
     e => (e.preventDefault(), e.keyCode)
-).withLatestFrom(model).subscribe(dispatchKeypress);
-
-function dispatchKeypress([keyCode, model]) {
-    const id = model.self.id;
-    const self = model.players.filter(p => p.id === id).pop();
-    const position = {
-        x: self.x,
-        y: self.y
-    };
-
-    const ARROWS = {
-        LEFT: 37,
-        TOP: 38,
-        RIGHT: 39,
-        BOTTOM: 40
-    };
-
-    switch (keyCode) {
-        case ARROWS.LEFT:
-            position.x -= 1;
-            break;
-        case ARROWS.TOP:
-            position.y -= 1;
-            break;
-        case ARROWS.RIGHT:
-            position.x += 1;
-            break;
-        case ARROWS.BOTTOM:
-            position.y += 1;
-            break;
-        default:
-            console.info(keyCode);
-            break;
-    }
-
-    _connection.send(protocol.getPositionUpdateMessage(position));
-}
+)
+    .withLatestFrom(model)
+    .map(dispatchKeypress)
+    .map(position => protocol.getPositionUpdateMessage(position))
+    .distinctUntilChanged()
+    .subscribe(update => _connection.send(update));
 
 document.getElementById('send')
     .addEventListener('click', onClick(document.getElementById('msg'), _connection));

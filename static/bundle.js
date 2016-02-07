@@ -40,25 +40,24 @@
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ({
-
-/***/ 0:
+/******/ ([
+/* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
-	
-	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 	
 	var _ramda = __webpack_require__(1);
 	
 	var _render = __webpack_require__(2);
 	
-	var dict = __webpack_require__(3);
-	var store = __webpack_require__(4);
-	var connection = __webpack_require__(9);
-	var dispatch = __webpack_require__(10);
-	var config = __webpack_require__(11)();
-	var protocol = __webpack_require__(12);
+	var _input = __webpack_require__(5);
+	
+	var dict = __webpack_require__(7);
+	var store = __webpack_require__(8);
+	var connection = __webpack_require__(12);
+	var dispatch = __webpack_require__(14);
+	var config = __webpack_require__(15)();
+	var protocol = __webpack_require__(16);
 	
 	function log(text) {
 	    console.info(text);
@@ -96,7 +95,6 @@
 	        return log(dict.MESSAGE.DISCONNECTED);
 	    }
 	});
-	_connection.subscribe(log);
 	
 	var _dispatch = dispatch(_connection);
 	
@@ -112,61 +110,20 @@
 	    return (0, _ramda.merge)(s, { map: u });
 	}).stream();
 	
-	model.subscribe(log);
 	model.subscribe((0, _render.render)(context(document.querySelector('#game')), document.querySelector('#current')));
 	
 	Rx.DOM.keydown(document.querySelector('body'), function (e) {
 	    return e.preventDefault(), e.keyCode;
-	}).withLatestFrom(model).subscribe(dispatchKeypress);
-	
-	function dispatchKeypress(_ref) {
-	    var _ref2 = _slicedToArray(_ref, 2);
-	
-	    var keyCode = _ref2[0];
-	    var model = _ref2[1];
-	
-	    var id = model.self.id;
-	    var self = model.players.filter(function (p) {
-	        return p.id === id;
-	    }).pop();
-	    var position = {
-	        x: self.x,
-	        y: self.y
-	    };
-	
-	    var ARROWS = {
-	        LEFT: 37,
-	        TOP: 38,
-	        RIGHT: 39,
-	        BOTTOM: 40
-	    };
-	
-	    switch (keyCode) {
-	        case ARROWS.LEFT:
-	            position.x -= 1;
-	            break;
-	        case ARROWS.TOP:
-	            position.y -= 1;
-	            break;
-	        case ARROWS.RIGHT:
-	            position.x += 1;
-	            break;
-	        case ARROWS.BOTTOM:
-	            position.y += 1;
-	            break;
-	        default:
-	            console.info(keyCode);
-	            break;
-	    }
-	
-	    _connection.send(protocol.getPositionUpdateMessage(position));
-	}
+	}).withLatestFrom(model).map(_input.dispatchKeypress).map(function (position) {
+	    return protocol.getPositionUpdateMessage(position);
+	}).distinctUntilChanged().subscribe(function (update) {
+	    return _connection.send(update);
+	});
 	
 	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
 
 /***/ },
-
-/***/ 1:
+/* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
 	//  Ramda v0.19.1
@@ -8618,13 +8575,12 @@
 
 
 /***/ },
-
-/***/ 2:
+/* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var _Map = __webpack_require__(273);
+	var _Map = __webpack_require__(3);
 	
 	function debug_players_renderer(elem) {
 	    var clean = function clean() {
@@ -8673,8 +8629,231 @@
 	};
 
 /***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
 
-/***/ 3:
+	'use strict';
+	
+	var R = __webpack_require__(1);
+	var CONSTANTS = __webpack_require__(4);
+	var drawHorizontalLine = function drawHorizontalLine(context, x, y) {
+	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawVerticalLine = function drawVerticalLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomRightLine = function drawBottomRightLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomLeftLine = function drawBottomLeftLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopLeftLine = function drawTopLeftLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopRightLine = function drawTopRightLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawTopCenterLine = function drawTopCenterLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomCenterLine = function drawBottomCenterLine(context, x, y) {
+	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawLeftCenterLine = function drawLeftCenterLine(context, x, y) {
+	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawRightCenterLine = function drawRightCenterLine(context, x, y) {
+	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	};
+	
+	var drawBottomCurve = function drawBottomCurve(context, x, y) {
+	    drawBottomLeftLine(context, x, y);
+	    drawBottomRightLine(context, x, y);
+	};
+	
+	var drawLeftCurve = function drawLeftCurve(context, x, y) {
+	    drawBottomLeftLine(context, x, y);
+	    drawTopLeftLine(context, x, y);
+	};
+	
+	var drawRightCurve = function drawRightCurve(context, x, y) {
+	    drawBottomRightLine(context, x, y);
+	    drawTopRightLine(context, x, y);
+	};
+	
+	var drawTopCurve = function drawTopCurve(context, x, y) {
+	    drawTopRightLine(context, x, y);
+	    drawTopLeftLine(context, x, y);
+	};
+	
+	var renderNonTraversable = function renderNonTraversable(context, x, y, block) {
+	    context.beginPath();
+	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
+	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
+	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
+	
+	    var action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(function (msg) {
+	        return console.log(msg);
+	    })]])(block);
+	    action(context, x, y);
+	    context.stroke();
+	};
+	var renderBlocks = R.curry(function (context, blocks) {
+	    blocks.forEach(function (line, y) {
+	        line.forEach(function (block, x) {
+	            var action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(function (msg) {
+	                return console.log(msg);
+	            })]])(block);
+	            action(context, x, y, block);
+	        });
+	    });
+	});
+	
+	module.exports = { render: renderBlocks };
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	var PACMAN = {
+	    TRAVERSABLE: { l: 100, r: 199 },
+	    NON_TRAVERSABLE: { l: 200, r: 299 }
+	};
+	
+	var GENERAL = {
+	    blockSize: 20
+	};
+	
+	var WALLS_OPTION = {
+	    strokeStyle: '#2c2a80',
+	    lineWidth: 5,
+	    lineCap: 'round'
+	};
+	var WALLS = {
+	    HORIZONTAL_LINE: 200,
+	    VERTICAL_LINE: 201,
+	    BOTTOM_RIGHT_LINE: 202,
+	    BOTTOM_LEFT_LINE: 203,
+	    TOP_RIGHT_LINE: 204,
+	    TOP_LEFT_LINE: 205,
+	    TOP_CENTER_LINE: 206,
+	    BOTTOM_CENTER_LINE: 207,
+	    LEFT_CENTER_LINE: 208,
+	    RIGHT_CENTER_LINE: 209,
+	    BOTTOM_CURVE: 210,
+	    TOP_CURVE: 211,
+	    LEFT_CURVE: 212,
+	    RIGHT_CURVE: 213
+	};
+	
+	module.exports = {
+	    PACMAN: PACMAN,
+	    GENERAL: GENERAL,
+	    WALLS_OPTION: WALLS_OPTION,
+	    WALLS: WALLS
+	};
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
+	/**
+	 * Created by ndyumin on 06.02.2016.
+	 */
+	
+	function dispatchKeypress(_ref) {
+	    var _ref2 = _slicedToArray(_ref, 2);
+	
+	    var keyCode = _ref2[0];
+	    var model = _ref2[1];
+	
+	    console.info(arguments);
+	
+	    var id = model.self.id;
+	    var self = model.players.filter(function (p) {
+	        return p.id === id;
+	    }).pop();
+	    var position = {
+	        x: self.x,
+	        y: self.y
+	    };
+	
+	    var ARROWS = {
+	        LEFT: 37,
+	        TOP: 38,
+	        RIGHT: 39,
+	        BOTTOM: 40
+	    };
+	
+	    switch (keyCode) {
+	        case ARROWS.LEFT:
+	            position.x -= 1;
+	            break;
+	        case ARROWS.TOP:
+	            position.y -= 1;
+	            break;
+	        case ARROWS.RIGHT:
+	            position.x += 1;
+	            break;
+	        case ARROWS.BOTTOM:
+	            position.y += 1;
+	            break;
+	        default:
+	            console.info(keyCode);
+	            break;
+	    }
+	
+	    return position;
+	}
+	
+	module.exports = {
+	    dispatchKeypress: dispatchKeypress
+	};
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
+	}
+
+
+/***/ },
+/* 7 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -8688,13 +8867,12 @@
 	};
 
 /***/ },
-
-/***/ 4:
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var _rxDom = __webpack_require__(5);
+	var _rxDom = __webpack_require__(9);
 	
 	var _rxDom2 = _interopRequireDefault(_rxDom);
 	
@@ -8720,8 +8898,7 @@
 	module.exports = store;
 
 /***/ },
-
-/***/ 5:
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {// Copyright (c) Microsoft, Inc. All rights reserved. See License.txt in the project root for license information.
@@ -8747,7 +8924,7 @@
 	
 	  // Because of build optimizers
 	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(7)], __WEBPACK_AMD_DEFINE_RESULT__ = function (Rx, exports) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(10)], __WEBPACK_AMD_DEFINE_RESULT__ = function (Rx, exports) {
 	      return factory(root, exports, Rx);
 	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof module === 'object' && module && module.exports === freeExports) {
@@ -10113,25 +10290,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }())))
 
 /***/ },
-
-/***/ 6:
-/***/ function(module, exports) {
-
-	module.exports = function(module) {
-		if(!module.webpackPolyfill) {
-			module.deprecate = function() {};
-			module.paths = [];
-			// module.parent = undefined by default
-			module.children = [];
-			module.webpackPolyfill = 1;
-		}
-		return module;
-	}
-
-
-/***/ },
-
-/***/ 7:
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global, process) {// Copyright (c) Microsoft, All rights reserved. See License.txt in the project root for license information.
@@ -22330,11 +22489,10 @@
 	
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }()), __webpack_require__(8)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }()), __webpack_require__(11)))
 
 /***/ },
-
-/***/ 8:
+/* 11 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -22431,15 +22589,14 @@
 
 
 /***/ },
-
-/***/ 9:
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	var _events = __webpack_require__(272);
+	var _events = __webpack_require__(13);
 	
-	var _rx = __webpack_require__(7);
+	var _rx = __webpack_require__(10);
 	
 	var _rx2 = _interopRequireDefault(_rx);
 	
@@ -22467,76 +22624,7 @@
 	module.exports = connection;
 
 /***/ },
-
-/***/ 10:
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	module.exports = function (connection) {
-	    var messages = connection.map(function (message) {
-	        return JSON.parse(message.data);
-	    });
-	    return {
-	        players$: messages.filter(function (m) {
-	            return m.type === 'players';
-	        }).map(function (m) {
-	            return m.data;
-	        }),
-	        self$: messages.filter(function (m) {
-	            return m.type === 'self';
-	        }).map(function (m) {
-	            return m.data;
-	        }),
-	        map$: messages.filter(function (m) {
-	            return m.type === 'map';
-	        }).map(function (m) {
-	            return m.data;
-	        })
-	    };
-	};
-
-/***/ },
-
-/***/ 11:
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(R) {'use strict';
-	
-	var parseQuery = R.pipe(R.replace('?', ''), R.split('&'), R.reject(R.equals('')), R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))), R.fromPairs);
-	
-	module.exports = function () {
-	    var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-	
-	    var defaults = {
-	        debug: false
-	    };
-	
-	    var urlOptions = parseQuery(window.location.search);
-	
-	    return Object.assign({}, defaults, urlOptions, opts);
-	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
-
-/***/ },
-
-/***/ 12:
-/***/ function(module, exports) {
-
-	"use strict";
-	
-	module.exports = {
-	    getPositionUpdateMessage: function getPositionUpdateMessage(position) {
-	        return JSON.stringify({
-	            "type": "position",
-	            "data": position
-	        });
-	    }
-	};
-
-/***/ },
-
-/***/ 272:
+/* 13 */
 /***/ function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
@@ -22840,155 +22928,70 @@
 
 
 /***/ },
-
-/***/ 273:
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	var R = __webpack_require__(1);
-	var CONSTANTS = __webpack_require__(274);
-	var drawHorizontalLine = function drawHorizontalLine(context, x, y) {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawVerticalLine = function drawVerticalLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomRightLine = function drawBottomRightLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomLeftLine = function drawBottomLeftLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawTopLeftLine = function drawTopLeftLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawTopRightLine = function drawTopRightLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawTopCenterLine = function drawTopCenterLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomCenterLine = function drawBottomCenterLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawLeftCenterLine = function drawLeftCenterLine(context, x, y) {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawRightCenterLine = function drawRightCenterLine(context, x, y) {
-	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	};
-	
-	var drawBottomCurve = function drawBottomCurve(context, x, y) {
-	    drawBottomLeftLine(context, x, y);
-	    drawBottomRightLine(context, x, y);
-	};
-	
-	var drawLeftCurve = function drawLeftCurve(context, x, y) {
-	    drawBottomLeftLine(context, x, y);
-	    drawTopLeftLine(context, x, y);
-	};
-	
-	var drawRightCurve = function drawRightCurve(context, x, y) {
-	    drawBottomRightLine(context, x, y);
-	    drawTopRightLine(context, x, y);
-	};
-	
-	var drawTopCurve = function drawTopCurve(context, x, y) {
-	    drawTopRightLine(context, x, y);
-	    drawTopLeftLine(context, x, y);
-	};
-	
-	var renderNonTraversable = function renderNonTraversable(context, x, y, block) {
-	    context.beginPath();
-	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
-	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
-	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
-	
-	    var action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(function (msg) {
-	        return console.log(msg);
-	    })]])(block);
-	    action(context, x, y);
-	    context.stroke();
-	};
-	var renderBlocks = R.curry(function (context, blocks) {
-	    blocks.forEach(function (line, y) {
-	        line.forEach(function (block, x) {
-	            var action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(function (msg) {
-	                return console.log(msg);
-	            })]])(block);
-	            action(context, x, y, block);
-	        });
-	    });
-	});
-	
-	module.exports = { render: renderBlocks };
-
-/***/ },
-
-/***/ 274:
+/* 14 */
 /***/ function(module, exports) {
 
 	'use strict';
 	
-	var PACMAN = {
-	    TRAVERSABLE: { l: 100, r: 199 },
-	    NON_TRAVERSABLE: { l: 200, r: 299 }
+	module.exports = function (connection) {
+	    var messages = connection.map(function (message) {
+	        return JSON.parse(message.data);
+	    });
+	    return {
+	        players$: messages.filter(function (m) {
+	            return m.type === 'players';
+	        }).map(function (m) {
+	            return m.data;
+	        }),
+	        self$: messages.filter(function (m) {
+	            return m.type === 'self';
+	        }).map(function (m) {
+	            return m.data;
+	        }),
+	        map$: messages.filter(function (m) {
+	            return m.type === 'map';
+	        }).map(function (m) {
+	            return m.data;
+	        })
+	    };
 	};
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(R) {'use strict';
 	
-	var GENERAL = {
-	    blockSize: 20
-	};
+	var parseQuery = R.pipe(R.replace('?', ''), R.split('&'), R.reject(R.equals('')), R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))), R.fromPairs);
 	
-	var WALLS_OPTION = {
-	    strokeStyle: '#2c2a80',
-	    lineWidth: 5,
-	    lineCap: 'round'
+	module.exports = function () {
+	    var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	
+	    var defaults = {
+	        debug: false
+	    };
+	
+	    var urlOptions = parseQuery(window.location.search);
+	
+	    return Object.assign({}, defaults, urlOptions, opts);
 	};
-	var WALLS = {
-	    HORIZONTAL_LINE: 200,
-	    VERTICAL_LINE: 201,
-	    BOTTOM_RIGHT_LINE: 202,
-	    BOTTOM_LEFT_LINE: 203,
-	    TOP_RIGHT_LINE: 204,
-	    TOP_LEFT_LINE: 205,
-	    TOP_CENTER_LINE: 206,
-	    BOTTOM_CENTER_LINE: 207,
-	    LEFT_CENTER_LINE: 208,
-	    RIGHT_CENTER_LINE: 209,
-	    BOTTOM_CURVE: 210,
-	    TOP_CURVE: 211,
-	    LEFT_CURVE: 212,
-	    RIGHT_CURVE: 213
-	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+	"use strict";
 	
 	module.exports = {
-	    PACMAN: PACMAN,
-	    GENERAL: GENERAL,
-	    WALLS_OPTION: WALLS_OPTION,
-	    WALLS: WALLS
+	    getPositionUpdateMessage: function getPositionUpdateMessage(position) {
+	        return JSON.stringify({
+	            "type": "position",
+	            "data": position
+	        });
+	    }
 	};
 
 /***/ }
-
-/******/ });
+/******/ ]);
 //# sourceMappingURL=bundle.js.map
