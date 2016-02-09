@@ -1,5 +1,6 @@
-const R = require('ramda');
-const CONSTANTS = require('./constants');
+import R from 'ramda';
+import CONSTANTS from './constants';
+
 const drawHorizontalLine = (context, x, y) => {
     context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
     context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);

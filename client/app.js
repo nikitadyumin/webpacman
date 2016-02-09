@@ -1,9 +1,9 @@
-const dict = require('./src/dict');
-const store = require('./src/store');
-const connection = require('./src/com/connection');
-const dispatch = require('./src/com/dispatch');
-const config = require('./src/config')();
-const protocol = require('./src/com/protocol');
+import dict from './src/dict';
+import store from './src/store';
+import connection from './src/com/connection';
+import dispatch from './src/com/dispatch';
+import config from './src/config';
+import protocol from './src/com/protocol';
 import { merge } from 'ramda';
 import { render } from './src/render';
 import { dispatchKeypress } from './src/input';
@@ -32,7 +32,8 @@ const _store = store({
     self: {}
 });
 
-const url = config.debug
+const _config = config();
+const url = _config.debug
     ? 'ws://localhost:8080/websocket'
     : 'ws://fierce-basin-86946.herokuapp.com/websocket';
 

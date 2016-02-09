@@ -46,18 +46,37 @@
 
 	'use strict';
 	
+	var _dict = __webpack_require__(7);
+	
+	var _dict2 = _interopRequireDefault(_dict);
+	
+	var _store2 = __webpack_require__(8);
+	
+	var _store3 = _interopRequireDefault(_store2);
+	
+	var _connection2 = __webpack_require__(12);
+	
+	var _connection3 = _interopRequireDefault(_connection2);
+	
+	var _dispatch2 = __webpack_require__(14);
+	
+	var _dispatch3 = _interopRequireDefault(_dispatch2);
+	
+	var _config2 = __webpack_require__(15);
+	
+	var _config3 = _interopRequireDefault(_config2);
+	
+	var _protocol = __webpack_require__(16);
+	
+	var _protocol2 = _interopRequireDefault(_protocol);
+	
 	var _ramda = __webpack_require__(1);
 	
 	var _render = __webpack_require__(2);
 	
 	var _input = __webpack_require__(5);
 	
-	var dict = __webpack_require__(7);
-	var store = __webpack_require__(8);
-	var connection = __webpack_require__(12);
-	var dispatch = __webpack_require__(14);
-	var config = __webpack_require__(15)();
-	var protocol = __webpack_require__(16);
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function log(text) {
 	    console.info(text);
@@ -79,24 +98,25 @@
 	    };
 	}
 	
-	var _store = store({
+	var _store = (0, _store3.default)({
 	    players: [],
 	    map: [],
 	    self: {}
 	});
 	
-	var url = config.debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket';
+	var _config = (0, _config3.default)();
+	var url = _config.debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket';
 	
-	var _connection = connection(url, {
+	var _connection = (0, _connection3.default)(url, {
 	    onOpen: function onOpen() {
-	        return log(dict.MESSAGE.CONNECTED);
+	        return log(_dict2.default.MESSAGE.CONNECTED);
 	    },
 	    onClose: function onClose() {
-	        return log(dict.MESSAGE.DISCONNECTED);
+	        return log(_dict2.default.MESSAGE.DISCONNECTED);
 	    }
 	});
 	
-	var _dispatch = dispatch(_connection);
+	var _dispatch = (0, _dispatch3.default)(_connection);
 	
 	var players$ = _dispatch.players$;
 	var self$ = _dispatch.self$;
@@ -115,7 +135,7 @@
 	Rx.DOM.keydown(document.querySelector('body'), function (e) {
 	    return e.preventDefault(), e.keyCode;
 	}).withLatestFrom(model).map(_input.dispatchKeypress).map(function (position) {
-	    return protocol.getPositionUpdateMessage(position);
+	    return _protocol2.default.getPositionUpdateMessage(position);
 	}).distinctUntilChanged().subscribe(function (update) {
 	    return _connection.send(update);
 	});
@@ -8634,56 +8654,64 @@
 
 	'use strict';
 	
-	var R = __webpack_require__(1);
-	var CONSTANTS = __webpack_require__(4);
+	var _ramda = __webpack_require__(1);
+	
+	var _ramda2 = _interopRequireDefault(_ramda);
+	
+	var _constants = __webpack_require__(4);
+	
+	var _constants2 = _interopRequireDefault(_constants);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
 	var drawHorizontalLine = function drawHorizontalLine(context, x, y) {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo(x * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
+	    context.lineTo((x + 1) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawVerticalLine = function drawVerticalLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, y * _constants2.default.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 1) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawBottomRightLine = function drawBottomRightLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 1) * _constants2.default.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize, (x + 1) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawBottomLeftLine = function drawBottomLeftLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 1) * _constants2.default.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize, x * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawTopLeftLine = function drawTopLeftLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, y * _constants2.default.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize, x * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawTopRightLine = function drawTopRightLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.quadraticCurveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize, (x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, y * _constants2.default.GENERAL.blockSize);
+	    context.quadraticCurveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize, (x + 1) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawTopCenterLine = function drawTopCenterLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, y * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, y * _constants2.default.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawBottomCenterLine = function drawBottomCenterLine(context, x, y) {
-	    context.moveTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 1) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 1) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawLeftCenterLine = function drawLeftCenterLine(context, x, y) {
-	    context.moveTo(x * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo(x * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawRightCenterLine = function drawRightCenterLine(context, x, y) {
-	    context.moveTo((x + 1) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
-	    context.lineTo((x + 0.5) * CONSTANTS.GENERAL.blockSize, (y + 0.5) * CONSTANTS.GENERAL.blockSize);
+	    context.moveTo((x + 1) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
+	    context.lineTo((x + 0.5) * _constants2.default.GENERAL.blockSize, (y + 0.5) * _constants2.default.GENERAL.blockSize);
 	};
 	
 	var drawBottomCurve = function drawBottomCurve(context, x, y) {
@@ -8708,20 +8736,20 @@
 	
 	var renderNonTraversable = function renderNonTraversable(context, x, y, block) {
 	    context.beginPath();
-	    context.strokeStyle = CONSTANTS.WALLS_OPTION.strokeStyle;
-	    context.lineWidth = CONSTANTS.WALLS_OPTION.lineWidth;
-	    context.lineCap = CONSTANTS.WALLS_OPTION.lineCap;
+	    context.strokeStyle = _constants2.default.WALLS_OPTION.strokeStyle;
+	    context.lineWidth = _constants2.default.WALLS_OPTION.lineWidth;
+	    context.lineCap = _constants2.default.WALLS_OPTION.lineCap;
 	
-	    var action = R.cond([[R.equals(CONSTANTS.WALLS.HORIZONTAL_LINE), R.always(drawHorizontalLine)], [R.equals(CONSTANTS.WALLS.VERTICAL_LINE), R.always(drawVerticalLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_RIGHT_LINE), R.always(drawBottomRightLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_LEFT_LINE), R.always(drawBottomLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_LEFT_LINE), R.always(drawTopLeftLine)], [R.equals(CONSTANTS.WALLS.TOP_RIGHT_LINE), R.always(drawTopRightLine)], [R.equals(CONSTANTS.WALLS.TOP_CENTER_LINE), R.always(drawTopCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CENTER_LINE), R.always(drawBottomCenterLine)], [R.equals(CONSTANTS.WALLS.LEFT_CENTER_LINE), R.always(drawLeftCenterLine)], [R.equals(CONSTANTS.WALLS.RIGHT_CENTER_LINE), R.always(drawRightCenterLine)], [R.equals(CONSTANTS.WALLS.BOTTOM_CURVE), R.always(drawBottomCurve)], [R.equals(CONSTANTS.WALLS.LEFT_CURVE), R.always(drawLeftCurve)], [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)], [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)], [R.T, R.always(function (msg) {
+	    var action = _ramda2.default.cond([[_ramda2.default.equals(_constants2.default.WALLS.HORIZONTAL_LINE), _ramda2.default.always(drawHorizontalLine)], [_ramda2.default.equals(_constants2.default.WALLS.VERTICAL_LINE), _ramda2.default.always(drawVerticalLine)], [_ramda2.default.equals(_constants2.default.WALLS.BOTTOM_RIGHT_LINE), _ramda2.default.always(drawBottomRightLine)], [_ramda2.default.equals(_constants2.default.WALLS.BOTTOM_LEFT_LINE), _ramda2.default.always(drawBottomLeftLine)], [_ramda2.default.equals(_constants2.default.WALLS.TOP_LEFT_LINE), _ramda2.default.always(drawTopLeftLine)], [_ramda2.default.equals(_constants2.default.WALLS.TOP_RIGHT_LINE), _ramda2.default.always(drawTopRightLine)], [_ramda2.default.equals(_constants2.default.WALLS.TOP_CENTER_LINE), _ramda2.default.always(drawTopCenterLine)], [_ramda2.default.equals(_constants2.default.WALLS.BOTTOM_CENTER_LINE), _ramda2.default.always(drawBottomCenterLine)], [_ramda2.default.equals(_constants2.default.WALLS.LEFT_CENTER_LINE), _ramda2.default.always(drawLeftCenterLine)], [_ramda2.default.equals(_constants2.default.WALLS.RIGHT_CENTER_LINE), _ramda2.default.always(drawRightCenterLine)], [_ramda2.default.equals(_constants2.default.WALLS.BOTTOM_CURVE), _ramda2.default.always(drawBottomCurve)], [_ramda2.default.equals(_constants2.default.WALLS.LEFT_CURVE), _ramda2.default.always(drawLeftCurve)], [_ramda2.default.equals(_constants2.default.WALLS.RIGHT_CURVE), _ramda2.default.always(drawRightCurve)], [_ramda2.default.equals(_constants2.default.WALLS.TOP_CURVE), _ramda2.default.always(drawTopCurve)], [_ramda2.default.T, _ramda2.default.always(function (msg) {
 	        return console.log(msg);
 	    })]])(block);
 	    action(context, x, y);
 	    context.stroke();
 	};
-	var renderBlocks = R.curry(function (context, blocks) {
+	var renderBlocks = _ramda2.default.curry(function (context, blocks) {
 	    blocks.forEach(function (line, y) {
 	        line.forEach(function (block, x) {
-	            var action = R.cond([[R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)], [R.T, R.always(function (msg) {
+	            var action = _ramda2.default.cond([[_ramda2.default.allPass([_ramda2.default.lte(_constants2.default.PACMAN.NON_TRAVERSABLE.l), _ramda2.default.gte(_constants2.default.PACMAN.NON_TRAVERSABLE.r)]), _ramda2.default.always(renderNonTraversable)], [_ramda2.default.T, _ramda2.default.always(function (msg) {
 	                return console.log(msg);
 	            })]])(block);
 	            action(context, x, y, block);
@@ -22960,9 +22988,15 @@
 /* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(R) {'use strict';
+	'use strict';
 	
-	var parseQuery = R.pipe(R.replace('?', ''), R.split('&'), R.reject(R.equals('')), R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))), R.fromPairs);
+	var _ramda = __webpack_require__(1);
+	
+	var _ramda2 = _interopRequireDefault(_ramda);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var parseQuery = _ramda2.default.pipe(_ramda2.default.replace('?', ''), _ramda2.default.split('&'), _ramda2.default.reject(_ramda2.default.equals('')), _ramda2.default.map(_ramda2.default.pipe(decodeURIComponent, _ramda2.default.invoker(1, 'split')('='))), _ramda2.default.fromPairs);
 	
 	module.exports = function () {
 	    var opts = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -22975,7 +23009,6 @@
 	
 	    return Object.assign({}, defaults, urlOptions, opts);
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
 
 /***/ },
 /* 16 */

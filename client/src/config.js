@@ -1,3 +1,5 @@
+import R from 'ramda';
+
 const parseQuery = R.pipe(
     R.replace('?', ''), R.split('&'), R.reject(R.equals('')),
     R.map(R.pipe(decodeURIComponent, R.invoker(1, 'split')('='))),
