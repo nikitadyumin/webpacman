@@ -6,7 +6,7 @@ import config from './src/config';
 import protocol from './src/com/protocol';
 import { merge } from 'ramda';
 import { render } from './src/render';
-import { dispatchKeypress } from './src/input';
+import inputDispatcher from './src/input';
 
 function log(text) {
     console.info(text);
@@ -55,15 +55,13 @@ model.subscribe(render(
     document.querySelector('#current'))
 );
 
-Rx.DOM.keydown(
-    document.querySelector('body'),
-    e => (e.preventDefault(), e.keyCode)
-)
-    .withLatestFrom(model)
-    .map(dispatchKeypress)
-    .map(position => protocol.getPositionUpdateMessage(position))
+const {positionUpdate$, tabPressed$} = inputDispatcher(document.querySelector('body'))(model);
+
+positionUpdate$.map(position => protocol.getPositionUpdateMessage(position))
     .distinctUntilChanged()
     .subscribe(update => _connection.send(update));
+
+tabPressed$.subscribe(log);
 
 document.getElementById('send')
     .addEventListener('click', onClick(document.getElementById('msg'), _connection));

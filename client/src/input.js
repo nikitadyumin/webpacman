@@ -2,9 +2,7 @@
  * Created by ndyumin on 06.02.2016.
  */
 
-function dispatchKeypress([keyCode, model]) {
-    console.info(arguments);
-
+function dispatchArrows([keyCode, model]) {
     const id = model.self.id;
     const self = model.players.filter(p => p.id === id).pop();
     const position = {
@@ -32,14 +30,31 @@ function dispatchKeypress([keyCode, model]) {
         case ARROWS.BOTTOM:
             position.y += 1;
             break;
-        default:
-            console.info(keyCode);
-            break;
     }
 
     return position;
 }
 
-module.exports = {
-    dispatchKeypress
-};
+function dispatcher(element) {
+    return function (model$) {
+        const keydownCodes$ = Rx.DOM.keydown( element )
+            .tap(e => e.preventDefault())
+            .map(e => e.keyCode);
+
+        const keyupCodes$ = Rx.DOM.keyup( element )
+            .tap(e => e.preventDefault())
+            .map(e => e.keyCode);
+
+        const isTab = c => c === 9;
+
+        return {
+            positionUpdate$: keydownCodes$.withLatestFrom(model$).map(dispatchArrows),
+            tabPressed$: keydownCodes$.filter(isTab).map(() => true)
+                .merge(keyupCodes$.filter(c => c === 9).map(() => false))
+                .distinctUntilChanged()
+                .startWith(false)
+        };
+    };
+}
+
+module.exports = dispatcher;
