@@ -23023,6 +23023,11 @@
 	    return position;
 	}
 	
+	var TAB = 9;
+	var isTab = function isTab(c) {
+	    return c === TAB;
+	};
+	
 	function dispatcher(element) {
 	    return function (model$) {
 	        var keydownCodes$ = Rx.DOM.keydown(element).tap(function (e) {
@@ -23037,17 +23042,11 @@
 	            return e.keyCode;
 	        });
 	
-	        var isTab = function isTab(c) {
-	            return c === 9;
-	        };
-	
 	        return {
 	            positionUpdate$: keydownCodes$.withLatestFrom(model$).map(dispatchArrows),
 	            tabPressed$: keydownCodes$.filter(isTab).map(function () {
 	                return true;
-	            }).merge(keyupCodes$.filter(function (c) {
-	                return c === 9;
-	            }).map(function () {
+	            }).merge(keyupCodes$.filter(isTab).map(function () {
 	                return false;
 	            })).distinctUntilChanged().startWith(false)
 	        };

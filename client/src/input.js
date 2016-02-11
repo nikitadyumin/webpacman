@@ -35,6 +35,9 @@ function dispatchArrows([keyCode, model]) {
     return position;
 }
 
+const TAB = 9;
+const isTab = c => c === TAB;
+
 function dispatcher(element) {
     return function (model$) {
         const keydownCodes$ = Rx.DOM.keydown( element )
@@ -45,12 +48,10 @@ function dispatcher(element) {
             .tap(e => e.preventDefault())
             .map(e => e.keyCode);
 
-        const isTab = c => c === 9;
-
         return {
             positionUpdate$: keydownCodes$.withLatestFrom(model$).map(dispatchArrows),
             tabPressed$: keydownCodes$.filter(isTab).map(() => true)
-                .merge(keyupCodes$.filter(c => c === 9).map(() => false))
+                .merge(keyupCodes$.filter(isTab).map(() => false))
                 .distinctUntilChanged()
                 .startWith(false)
         };
