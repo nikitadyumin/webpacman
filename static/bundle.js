@@ -145,7 +145,23 @@
 	    return _connection.send(update);
 	});
 	
-	tabPressed$.subscribe(log);
+	function loadTemplate(id) {
+	    var templateString = document.querySelector('.template[data-id="' + id + '"]').innerHTML;
+	    return templateString.substring(templateString.indexOf('<!--') + 4, templateString.indexOf('-->'));
+	}
+	
+	function createStatsModal() {
+	    var div = document.createElement('div');
+	    div.innerHTML = loadTemplate('stats');
+	    return div;
+	}
+	
+	var modal = createStatsModal();
+	document.body.appendChild(modal);
+	
+	tabPressed$.subscribe(function (visible) {
+	    return modal.style.display = visible ? 'block' : 'none';
+	});
 	
 	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
 

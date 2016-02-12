@@ -24,6 +24,19 @@
         [data-player="self"] {
             background-color: aqua;
         }
+        .template {
+            display: none;
+        }
+        .modal {
+            background-color: mintcream;
+            opacity: 0.8;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +55,51 @@ position update for the current player\connection
 <div id="current"></div>
 <div id="status"></div>
 <div id="game"></div>
+
+<div class="template" data-id="stats-row">
+    <!--
+        <tr>
+            <td>1</td>
+            <td>df</td>
+            <td>sdf</td>
+        </tr>
+    -->
+</div>
+<div class="template" data-id="stats">
+    <!--
+        <div class="modal">
+            <table>
+                <tbody>
+                    <tr>
+                        <td>sdf1</td>
+                        <td>d23ff</td>
+                        <td>sd23ff</td>
+                    </tr>
+                    <tr>
+                        <td>sdf1</td>
+                        <td>d23ff</td>
+                        <td>sd23ff</td>
+                    </tr>
+                    <tr>
+                        <td>sdf1</td>
+                        <td>d23ff</td>
+                        <td>sd23ff</td>
+                    </tr>
+                    <tr>
+                        <td>sdf1</td>
+                        <td>d23ff</td>
+                        <td>sd23ff</td>
+                    </tr>
+                    <tr>
+                        <td>1324</td>
+                        <td>d2ff</td>
+                        <td>sd23f2f</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    -->
+</div>
 <script src="bundle.js"></script>
 </body>
 </html>
