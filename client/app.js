@@ -7,6 +7,8 @@ import protocol from './src/com/protocol';
 import { merge } from 'ramda';
 import { render } from './src/render';
 import inputDispatcher from './src/input';
+import statsView from './src/view/stats';
+import  patch  from 'virtual-dom/patch';
 
 function log(text) {
     console.info(text);
@@ -62,22 +64,9 @@ positionUpdate$.map(position => protocol.getPositionUpdateMessage(position))
     .subscribe(update => _connection.send(update));
 
 
-function loadTemplate(id) {
-    const templateString = document.querySelector('.template[data-id="' + id + '"]').innerHTML;
-    return templateString.substring(templateString.indexOf('<!--') + 4, templateString.indexOf('-->'));
-}
-
-function createStatsModal() {
-    const div = document.createElement('div');
-    div.innerHTML = loadTemplate('stats');
-    return div;
-}
-
-const modal = createStatsModal();
-document.body.appendChild(modal);
-
-tabPressed$.subscribe(visible => modal.style.display = visible ? 'block' : 'none');
-
+const statsView$ = statsView.getUpdater(tabPressed$);
+let $modal = document.querySelector('#modalStats');
+statsView$.subscribe(p => $modal = patch($modal, p));
 
 document.getElementById('send')
     .addEventListener('click', onClick(document.getElementById('msg'), _connection));
