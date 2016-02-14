@@ -6,8 +6,8 @@ import patch from 'virtual-dom/patch';
 import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 
-const statsModal = state =>
-    h('div', {className: 'modal', style: {'display': state ? 'block' : 'none'}},
+const statsModal = ([visibility, state]) =>
+    h('div', {className: 'modal', style: {'display': visibility ? 'block' : 'none'}},
         h('table', {},
             h('tbody', {},
                 h('tr', {},
@@ -28,11 +28,11 @@ const statsModal = state =>
             ))
     );
 
-
 const EMPTY_TREE = h('div');
 
-const getUpdater = model$ =>
-    model$
+const getUpdater = (visibility$, model$) =>
+    visibility$
+        .withLatestFrom(model$)
         .map(statsModal)
         .scan((tree, newTree) => diff(tree, newTree), EMPTY_TREE);
 

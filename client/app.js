@@ -46,25 +46,24 @@ const _connection = connection(url, {
 
 const {players$, self$, map$} = dispatch(_connection);
 
-const model = _store
+const model$ = _store
     .plug(players$, (s, u) => merge(s, {players: u}))
     .plug(self$, (s, u) => merge(s, {self: u}))
     .plug(map$, (s, u) => merge(s, {map: u}))
     .stream();
 
-model.subscribe(render(
+model$.subscribe(render(
     context(document.querySelector('#game')),
     document.querySelector('#current'))
 );
 
-const {positionUpdate$, tabPressed$} = inputDispatcher(document.querySelector('body'))(model);
+const {positionUpdate$, tabPressed$} = inputDispatcher(document.querySelector('body'))(model$);
 
 positionUpdate$.map(position => protocol.getPositionUpdateMessage(position))
     .distinctUntilChanged()
     .subscribe(update => _connection.send(update));
 
-
-const statsView$ = statsView.getUpdater(tabPressed$);
+const statsView$ = statsView.getUpdater(tabPressed$, model$);
 let $modal = document.querySelector('#modalStats');
 statsView$.subscribe(p => $modal = patch($modal, p));
 

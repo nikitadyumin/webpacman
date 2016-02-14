@@ -132,7 +132,7 @@
 	var self$ = _dispatch.self$;
 	var map$ = _dispatch.map$;
 	
-	var model = _store.plug(players$, function (s, u) {
+	var model$ = _store.plug(players$, function (s, u) {
 	    return (0, _ramda.merge)(s, { players: u });
 	}).plug(self$, function (s, u) {
 	    return (0, _ramda.merge)(s, { self: u });
@@ -140,9 +140,9 @@
 	    return (0, _ramda.merge)(s, { map: u });
 	}).stream();
 	
-	model.subscribe((0, _render.render)(context(document.querySelector('#game')), document.querySelector('#current')));
+	model$.subscribe((0, _render.render)(context(document.querySelector('#game')), document.querySelector('#current')));
 	
-	var _inputDispatcher = (0, _input2.default)(document.querySelector('body'))(model);
+	var _inputDispatcher = (0, _input2.default)(document.querySelector('body'))(model$);
 	
 	var positionUpdate$ = _inputDispatcher.positionUpdate$;
 	var tabPressed$ = _inputDispatcher.tabPressed$;
@@ -153,7 +153,7 @@
 	    return _connection.send(update);
 	});
 	
-	var statsView$ = _stats2.default.getUpdater(tabPressed$);
+	var statsView$ = _stats2.default.getUpdater(tabPressed$, model$);
 	var $modal = document.querySelector('#modalStats');
 	statsView$.subscribe(function (p) {
 	    return $modal = (0, _patch2.default)($modal, p);
@@ -23073,6 +23073,10 @@
 
 	'use strict';
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          * Created by ndyumin on 13.02.2016.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          */
+	
 	var _h = __webpack_require__(41);
 	
 	var _h2 = _interopRequireDefault(_h);
@@ -23091,18 +23095,18 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	/**
-	 * Created by ndyumin on 13.02.2016.
-	 */
+	var statsModal = function statsModal(_ref) {
+	    var _ref2 = _slicedToArray(_ref, 2);
 	
-	var statsModal = function statsModal(state) {
-	    return (0, _h2.default)('div', { className: 'modal', style: { 'display': state ? 'block' : 'none' } }, (0, _h2.default)('table', {}, (0, _h2.default)('tbody', {}, (0, _h2.default)('tr', {}, (0, _h2.default)('td', {}, 'skjdhf'), (0, _h2.default)('td', {}, 'skjdhf'), (0, _h2.default)('td', {}, 'skjdhf')), (0, _h2.default)('tr', {}, (0, _h2.default)('td', {}, '34f43'), (0, _h2.default)('td', {}, '3f'), (0, _h2.default)('td', {}, '3f34f')), (0, _h2.default)('tr', {}, (0, _h2.default)('td', {}, '034kf'), (0, _h2.default)('td', {}, '394jf'), (0, _h2.default)('td', {}, '3j4f8j')))));
+	    var visibility = _ref2[0];
+	    var state = _ref2[1];
+	    return (0, _h2.default)('div', { className: 'modal', style: { 'display': visibility ? 'block' : 'none' } }, (0, _h2.default)('table', {}, (0, _h2.default)('tbody', {}, (0, _h2.default)('tr', {}, (0, _h2.default)('td', {}, 'skjdhf'), (0, _h2.default)('td', {}, 'skjdhf'), (0, _h2.default)('td', {}, 'skjdhf')), (0, _h2.default)('tr', {}, (0, _h2.default)('td', {}, '34f43'), (0, _h2.default)('td', {}, '3f'), (0, _h2.default)('td', {}, '3f34f')), (0, _h2.default)('tr', {}, (0, _h2.default)('td', {}, '034kf'), (0, _h2.default)('td', {}, '394jf'), (0, _h2.default)('td', {}, '3j4f8j')))));
 	};
 	
 	var EMPTY_TREE = (0, _h2.default)('div');
 	
-	var getUpdater = function getUpdater(model$) {
-	    return model$.map(statsModal).scan(function (tree, newTree) {
+	var getUpdater = function getUpdater(visibility$, model$) {
+	    return visibility$.withLatestFrom(model$).map(statsModal).scan(function (tree, newTree) {
 	        return (0, _diff2.default)(tree, newTree);
 	    }, EMPTY_TREE);
 	};
