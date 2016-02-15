@@ -6,27 +6,27 @@ import patch from 'virtual-dom/patch';
 import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 
+const playerLine = (player) =>
+    h('tr', {}, [
+        h('td', {}, player.id),
+        h('td', {}, player.score),
+        h('td', {}, player.x),
+        h('td', {}, player.y)
+    ]);
+
 const statsModal = ([visibility, state]) =>
     h('div', {className: 'modal', style: {'display': visibility ? 'block' : 'none'}},
-        h('table', {},
+        h('table', {}, [
+            h('thead', {}, [
+                h('td', {}, 'id'),
+                h('td', {}, 'score'),
+                h('td', {}, 'X'),
+                h('td', {}, 'Y')
+            ]),
             h('tbody', {},
-                h('tr', {},
-                    h('td', {}, 'skjdhf'),
-                    h('td', {}, 'skjdhf'),
-                    h('td', {}, 'skjdhf')
-                ),
-                h('tr', {},
-                    h('td', {}, '34f43'),
-                    h('td', {}, '3f'),
-                    h('td', {}, '3f34f')
-                ),
-                h('tr', {},
-                    h('td', {}, '034kf'),
-                    h('td', {}, '394jf'),
-                    h('td', {}, '3j4f8j')
-                )
-            ))
-    );
+                state.players.map(playerLine)
+            )
+        ]));
 
 const EMPTY_TREE = h('div');
 
