@@ -6,6 +6,8 @@ import patch from 'virtual-dom/patch';
 import diff from 'virtual-dom/diff';
 import createElement from 'virtual-dom/create-element';
 
+const scoreComparator = (o1, o2) => o2.score - o1.score;
+
 const playerLine = (player) =>
     h('tr', {}, [
         h('td', {}, player.id),
@@ -16,7 +18,7 @@ const playerLine = (player) =>
 
 const statsModal = ([visibility, state]) =>
     h('div', {className: 'modal', style: {'display': visibility ? 'block' : 'none'}},
-        h('table', {}, [
+        h('table', {className: 'table table-striped'}, [
             h('thead', {}, [
                 h('td', {}, 'id'),
                 h('td', {}, 'score'),
@@ -24,7 +26,7 @@ const statsModal = ([visibility, state]) =>
                 h('td', {}, 'Y')
             ]),
             h('tbody', {},
-                state.players.map(playerLine)
+                state.players.sort(scoreComparator).map(playerLine)
             )
         ]));
 

@@ -23095,6 +23095,10 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var scoreComparator = function scoreComparator(o1, o2) {
+	    return o2.score - o1.score;
+	};
+	
 	var playerLine = function playerLine(player) {
 	    return (0, _h2.default)('tr', {}, [(0, _h2.default)('td', {}, player.id), (0, _h2.default)('td', {}, player.score), (0, _h2.default)('td', {}, player.x), (0, _h2.default)('td', {}, player.y)]);
 	};
@@ -23104,7 +23108,7 @@
 	
 	    var visibility = _ref2[0];
 	    var state = _ref2[1];
-	    return (0, _h2.default)('div', { className: 'modal', style: { 'display': visibility ? 'block' : 'none' } }, (0, _h2.default)('table', {}, [(0, _h2.default)('thead', {}, [(0, _h2.default)('td', {}, 'id'), (0, _h2.default)('td', {}, 'score'), (0, _h2.default)('td', {}, 'X'), (0, _h2.default)('td', {}, 'Y')]), (0, _h2.default)('tbody', {}, state.players.map(playerLine))]));
+	    return (0, _h2.default)('div', { className: 'modal', style: { 'display': visibility ? 'block' : 'none' } }, (0, _h2.default)('table', { className: 'table table-striped' }, [(0, _h2.default)('thead', {}, [(0, _h2.default)('td', {}, 'id'), (0, _h2.default)('td', {}, 'score'), (0, _h2.default)('td', {}, 'X'), (0, _h2.default)('td', {}, 'Y')]), (0, _h2.default)('tbody', {}, state.players.sort(scoreComparator).map(playerLine))]));
 	};
 	
 	var EMPTY_TREE = (0, _h2.default)('div');
