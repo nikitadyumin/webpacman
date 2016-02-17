@@ -99,7 +99,7 @@ const renderNonTraversable = (context, x, y, block) => {
             [R.equals(CONSTANTS.WALLS.RIGHT_CURVE), R.always(drawRightCurve)],
             [R.equals(CONSTANTS.WALLS.TOP_CURVE), R.always(drawTopCurve)],
 
-            [R.T, R.always((msg) => console.log(msg))]
+            [R.T, R.always((msg) => {})]
         ])(block);
     action(context, x, y);
     context.stroke();
@@ -111,7 +111,7 @@ const renderBlocks = R.curry((context, blocks) => {
             const action =
                 R.cond([
                     [R.allPass([R.lte(CONSTANTS.PACMAN.NON_TRAVERSABLE.l), R.gte(CONSTANTS.PACMAN.NON_TRAVERSABLE.r)]), R.always(renderNonTraversable)],
-                    [R.T, R.always((msg) => console.log(msg))]]
+                    [R.T, R.always((msg) => {})]]
                 )(block);
             action(context, x, y, block);
         })
