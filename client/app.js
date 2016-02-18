@@ -24,16 +24,6 @@ function context(element) {
     return canvas.getContext('2d');
 }
 
-function onClick(input, connection) {
-    return () => connection.send(input.value);
-}
-
-const _store = store({
-    players: [],
-    map: [],
-    self: {}
-});
-
 const _config = config();
 const url = _config.debug
     ? 'ws://localhost:8080/websocket'
@@ -46,7 +36,11 @@ const _connection = connection(url, {
 
 const {players$, self$, map$} = dispatch(_connection);
 
-const model$ = _store
+const model$ = store({
+    players: [],
+    map: [],
+    self: {}
+})
     .plug(players$, (s, u) => merge(s, {players: u}))
     .plug(self$, (s, u) => merge(s, {self: u}))
     .plug(map$, (s, u) => merge(s, {map: u}))
@@ -66,6 +60,3 @@ positionUpdate$.map(position => protocol.getPositionUpdateMessage(position))
 const statsView$ = statsView.getUpdater(tabPressed$, model$);
 let $modal = document.querySelector('#modalStats');
 statsView$.subscribe(p => $modal = patch($modal, p));
-
-document.getElementById('send')
-    .addEventListener('click', onClick(document.getElementById('msg'), _connection));

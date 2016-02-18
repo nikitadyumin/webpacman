@@ -50,9 +50,9 @@
 	
 	var _dict2 = _interopRequireDefault(_dict);
 	
-	var _store2 = __webpack_require__(2);
+	var _store = __webpack_require__(2);
 	
-	var _store3 = _interopRequireDefault(_store2);
+	var _store2 = _interopRequireDefault(_store);
 	
 	var _connection2 = __webpack_require__(7);
 	
@@ -102,18 +102,6 @@
 	    return canvas.getContext('2d');
 	}
 	
-	function onClick(input, connection) {
-	    return function () {
-	        return connection.send(input.value);
-	    };
-	}
-	
-	var _store = (0, _store3.default)({
-	    players: [],
-	    map: [],
-	    self: {}
-	});
-	
 	var _config = (0, _config3.default)();
 	var url = _config.debug ? 'ws://localhost:8080/websocket' : 'ws://fierce-basin-86946.herokuapp.com/websocket';
 	
@@ -132,7 +120,11 @@
 	var self$ = _dispatch.self$;
 	var map$ = _dispatch.map$;
 	
-	var model$ = _store.plug(players$, function (s, u) {
+	var model$ = (0, _store2.default)({
+	    players: [],
+	    map: [],
+	    self: {}
+	}).plug(players$, function (s, u) {
 	    return (0, _ramda.merge)(s, { players: u });
 	}).plug(self$, function (s, u) {
 	    return (0, _ramda.merge)(s, { self: u });
@@ -158,8 +150,6 @@
 	statsView$.subscribe(function (p) {
 	    return $modal = (0, _patch2.default)($modal, p);
 	});
-	
-	document.getElementById('send').addEventListener('click', onClick(document.getElementById('msg'), _connection));
 
 /***/ },
 /* 1 */
